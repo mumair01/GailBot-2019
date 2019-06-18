@@ -122,7 +122,7 @@ shellCommands = {
 
 #ffmpeg -i input0.mp3 -i input1.mp3 -filter_complex join=inputs=2:channel_layout=stereo output.mp3
 # Queue of intermediate files to be deleted at the end of request.
-delteQueue = Queue.Queue()
+deleteQueue = Queue.Queue()
 
 
 # ***********************
@@ -165,13 +165,16 @@ def main_menu(username,password,closure):
 def recording_menu(username,password,closure):
 	while True:
 		os.system('clear')
-		print(colored("Audio recording settings\n",'red'))
-		print("Current chunk size (bytes): {}".format(recordingVals['Recording_chunk_size']))
-		print("Current audio format: {}".format(recordingVals['Format']))
-		print("Current audio channels: {}".format(recordingVals['channels']))
-		print("Current recording rate (Hertz): {}".format(recordingVals['rate']))
-		print("Current audio filename: {}".format(recordingVals['audioFilename']))
-		print("Current recording length (seconds): {}".format(recordingVals['recordSeconds']))
+		x = PrettyTable()
+		x.title = colored("Audio recording settings",'red')
+		x.field_names = [colored('Setting','blue'),colored('Value','blue')]
+		x.add_row(['Current chunk size (bytes)',recordingVals['Recording_chunk_size']])
+		x.add_row(["Current audio format", recordingVals['Format']])
+		x.add_row(["Current audio channels",recordingVals['channels']])
+		x.add_row(["Current recording rate (Hertz)",recordingVals['rate']])
+		x.add_row(["Current audio filename",recordingVals['audioFilename']])
+		x.add_row(["Current recording length (seconds)",recordingVals['recordSeconds']])
+		print(x)
 		print("\n1. Modify audio chunk size")
 		print("2. Modify audio format")
 		print("3. Modify audio channels")
@@ -192,15 +195,17 @@ def request_menu(username,password,closure):
 		watsonVals['username'] = username
 		watsonVals['password'] = password
 		os.system('clear')
-		print(colored("Pre-request menu\n",'red'))
-		print("IBM Bluemix Username: {}".format(watsonVals['username']))
-		print("IBM Bluemix password: {}".format(watsonVals['password']))
-		print("Base language model: {}".format(watsonVals['base-model']))
-		print("Custom acoustic model ID: {}".format(watsonVals['acoustic-id']))
-		print("Custom language model ID: {}".format(watsonVals['custom-id']) )
-		print("X-Watson-Learning opt out: {}".format(watsonVals['opt-out']))
-		print("Authentication type: {}".format(watsonVals['token-type']))
-		print("Custom language model weight: {}\n".format(watsonVals['customizationWeight']))
+		y = PrettyTable()
+		y.field_names = [colored("Request variable",'blue'),colored("Value",'blue')]
+		y.add_row(["IBM Bluemix Username",watsonVals['username']])
+		y.add_row(["IBM Bluemix password",watsonVals['password']])
+		y.add_row(["Base language model",watsonVals['base-model']])
+		y.add_row(["Custom acoustic model ID",watsonVals['acoustic-id']])
+		y.add_row(["Custom language model ID",watsonVals['custom-id']])
+		y.add_row(["X-Watson-Learning opt out",watsonVals['opt-out']])
+		y.add_row(["Authentication type",watsonVals['token-type']])
+		y.add_row(["Custom language model weight",watsonVals['customizationWeight']])
+		print(y)
 		x = PrettyTable()
 		x.field_names  = [
 			colored('Audio file','blue'),colored('Output Directory','blue'),
@@ -230,19 +235,19 @@ def request_menu(username,password,closure):
 def transcribe_new(username,password,closure):
 	if not recording_menu(username,password,closure): return
 	# Setting and verifying dictionary values.
+	pairDic = {"files" : []}
 	watsonVals['files'] = [recordingVals['audioFilename']]
 	if any(file for file in watsonVals['files'] if not os.path.isfile(file)):
 		print("\nERROR: File does not exist")
 		return
 	# Verifying content Type and extracting opus file if needed.
-	watsonVals['files'] = convertOpus(watsonVals['files'],delteQueue)
+	watsonVals['files'],pairDic = convertOpus(watsonVals['files'],deleteQueue,pairDic)
 	setOutputDir(watsonVals['files'],watsonVals['files'][0][:watsonVals['files'][0].rfind('.')])	
-	watsonVals['contentType'] = setContentType(audioFormatMapping,
-			watsonVals['files'])
-
+	watsonVals['contentType'] = setContentType(audioFormatMapping,watsonVals['files'])
+	# Setting speaker names
+	setSpeakers(watsonVals['files'],pairDic)
 	# Setting post-processing variables.
 	if not CHAT.main_menu({}): return
-
 	if not request_menu(username,password,closure): return
 	# Sending request.
 	sendRequest(username,password,closure)
@@ -250,7 +255,6 @@ def transcribe_new(username,password,closure):
 # Function that transcribes a pre-recorded conversation
 def transcribe_recorded(username,password,closure):
 	if getAudioFileList() == None: return
-	#if watsonVals['files'] == False : return
 
 	# Setting post-processing variables.
 	if not CHAT.main_menu({}): return
@@ -426,10 +430,15 @@ request_actions = {
 # Returns None to nor proceed. True to proceed
 def getAudioFileList(getVal=True):
 	if not getVal :return
-	print(colored("Supported audio formats",'red'))
-	for k,v in audioFormatMapping.items(): print(k + ' : ' + v)
-	print(colored("\nSupported video formats",'red'))
-	for k,v in videoFormats.items(): print(k + ' : ' + v)
+	audioTable = PrettyTable() ; videoTable = PrettyTable()
+	audioTable.title = colored("Supported audio formats",'red')
+	videoTable.title = colored("Supported video formats",'red')
+	audioTable.field_names = [colored('Audio Format','blue'),colored('Extension','blue')]
+	videoTable.field_names = [colored('Video Format','blue'),colored('Extension','blue')]
+	for k,v in audioFormatMapping.items():  audioTable.add_row([k,v])
+	for k,v in videoFormats.items(): videoTable.add_row([k,v])
+	print(audioTable)
+	print(videoTable)
 	print('\n')
 	while True:
 		print("Enter audio/video file names (space delimited)\n"
@@ -447,7 +456,7 @@ def getAudioFileList(getVal=True):
 		# Extracting audio from video inputs.
 		localDic['files'],pairDic = extractAudio(localDic['files'],pairDic)
 		# Converting files larger than threshold to Opus 
-		localDic['files'],pairDic = convertOpus(localDic['files'],delteQueue,pairDic)
+		localDic['files'],pairDic = convertOpus(localDic['files'],deleteQueue,pairDic)
 		# Setting output directories.
 		for file in localDic['files']:
 			trimmedKeys = [x[:x.find('.')] for x in watsonVals['output-directory'].keys()]
@@ -494,7 +503,6 @@ def sendRequest(username,password,closure):
 	if watsonVals['token-type'] == 'Access' : token = 0
 	elif watsonVals['token-type'] == 'Watson' : token = 1
 	# Command to run the Speeach to Text core module.
-
 	outputInfo = STT.run(username=watsonVals['username'],password = watsonVals['password'],
 		base_model= watsonVals['base-model'],acoustic_id = watsonVals['acoustic-id'],
 		language_id=watsonVals['custom-id'],watson_token=watsonVals['token-type'],
@@ -506,10 +514,13 @@ def sendRequest(username,password,closure):
 	for dic in outputInfo:
 		if dic['audioFile'] in watsonVals['combinedAudio'].keys():
 			dic['audioFile'] = watsonVals['combinedAudio'][dic['audioFile']]
+		# Moving audiofiles to output directory
+		try:shutil.copy(dic['audioFile'],dic['outputDir']+'/')
+		except (shutil.Error,FileNotFoundError):pass
 	# Performing post-processing
 	postProcessing.postProcess(outputInfo)
 	# Deleting generated opus files
-	while not delteQueue.empty(): os.remove(delteQueue.get_nowait())
+	while not deleteQueue.empty(): os.remove(deleteQueue.get_nowait())
 	input("\nRequest Processed\nPress any key to continue")
 	# Restoring defaults after request
 	watsonDefaults(username,password,False)
@@ -628,7 +639,8 @@ def overlay(pairList,outDirDic):
 		name = pair[0][:pair[0].rfind('.')]+"-"+pair[1][:pair[1].rfind('.')]+'-combined.wav'
 		path = outDirDic[pair[0]]+'/'+name
 		cmd = shellCommands['overlay'].format(pair[0],pair[1],path)
-		subprocess.call(cmd, shell=True)
+		devnull = open(os.devnull, 'w')
+		subprocess.call(cmd, shell=True,stdout=devnull,stderr=devnull)
 		for file in pair:watsonVals['combinedAudio'][file] = name
 
 

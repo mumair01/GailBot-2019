@@ -370,7 +370,7 @@ def run(username,password,out_dir,base_model,acoustic_id,language_id,
 	for fileName in audio_files:
 		print("Adding to queue\nFilename: {0}, FileNumber: {1}, "
 			"Output Directory: {2}".format(fileName,fileNumber,out_dir[fileName]))
-		print("Speaker names: {}".format(names))
+		print("Speaker names: {}".format(names[fileName]))
 		q.put((fileName,fileNumber,out_dir[fileName],contentType[fileName],names[fileName]))		# Adding File information as a tuple in the processing queue.
 		fileNumber +=1
 
