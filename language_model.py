@@ -25,6 +25,7 @@ import json
 import sys, time, os
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from termcolor import colored
+from prettytable import PrettyTable				# Table printing library
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -46,12 +47,15 @@ def interface(username,password):
 def main_menu(username,password,closure):
 	while True:
 		os.system('clear')
+		x = PrettyTable()
+		x.field_names = [colored('Setting','blue'),colored('Value','blue')]
+		x.add_row(["Current default model",output['base-model']])
+		x.add_row(["Current custom model",str(output["custom-model"])])
 		print("Welcome to Gailbot's custom " + colored('language model','red') + " interface!\n")
 		print('Use options 1 through 8 to select the model(s) that you would like to use.\n'
-			'Press 9 to proceed once all changes are made.\n'
-			'\nCurrent default model: ' + output['base-model'] + '\n'
-			'Current custom model: ' + str(output["custom-model"]) + '\n' )
-		print("Please choose one of the following options:")
+			'Press 9 to proceed once all changes are made.\n')
+		print(x)
+		print("\nPlease choose one of the following options:")
 		print("1. Select a custom language model")
 		print("2. Delete a custom language model")
 		print("3. Create a custom language model")

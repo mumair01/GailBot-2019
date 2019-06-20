@@ -28,7 +28,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from pydub import AudioSegment
 from pydub.utils import make_chunks
 from termcolor import colored
-
+from prettytable import PrettyTable				# Table printing library
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -50,12 +50,15 @@ def interface(username,password):
 def main_menu(username,password,closure):
 	while True:
 		os.system('clear')
+		x = PrettyTable()
+		x.field_names = [colored('Setting','blue'),colored('Value','blue')]
+		x.add_row(["Default mode",base_model])
+		x.add_row(["Current custom model",str(output["acoustic-model"])])
 		print("Welcome to Gailbot's custom " + colored('acoustic model','red')+ " interface!\n")
 		print('Use options 1 through 3 to select the model(s) that you would like to use.\n'
-			'Press 4 to proceed once all changes are made.\n'
-			'\nDefault model: ' + base_model + '\n'
-			'Current custom model: ' + str(output["acoustic-model"]) + '\n' )
-		print("Please choose one of the following options:")
+			'Press 4 to proceed once all changes are made.\n')
+		print(x)
+		print("\nPlease choose one of the following options:")
 		print("1. Select a custom acoustic model")
 		print("2. Delete a custom acoustic model")
 		print("3. Create a custom acoustic model")

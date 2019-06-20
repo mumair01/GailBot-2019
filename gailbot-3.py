@@ -46,6 +46,7 @@ from progressbar import AnimatedMarker, Bar, BouncingBar, Counter, ETA, \
     ProgressBar, ReverseBar, RotatingMarker, \
     SimpleProgress, Timer, UnknownLength
 
+
 # *** Global variables / invariants ***
 
 
@@ -120,7 +121,6 @@ shellCommands = {
 	"overlay" : "ffmpeg -i {0} -i {1} -filter_complex join=inputs=2:channel_layout=stereo {2}"			#.format(file1,file2,outPath)
 }
 
-#ffmpeg -i input0.mp3 -i input1.mp3 -filter_complex join=inputs=2:channel_layout=stereo output.mp3
 # Queue of intermediate files to be deleted at the end of request.
 deleteQueue = Queue.Queue()
 
@@ -512,11 +512,14 @@ def sendRequest(username,password,closure):
 		out_dir=watsonVals['output-directory'],opt_out = watsonVals['opt-out'])
 	# Adding combined audio information to output.
 	for dic in outputInfo:
+		# Copying original audiofiles to output directory
+		copyFile(dic['audioFile'],dic['outputDir']+'/')
+		# Adding individual file path and name
+		dic['individualAudioFile'] =dic['outputDir']+'/'+ dic['audioFile']
 		if dic['audioFile'] in watsonVals['combinedAudio'].keys():
 			dic['audioFile'] = watsonVals['combinedAudio'][dic['audioFile']]
-		# Moving audiofiles to output directory
-		try:shutil.copy(dic['audioFile'],dic['outputDir']+'/')
-		except (shutil.Error,FileNotFoundError):pass
+		# Copying audiofiles to output directory
+		copyFile(dic['audioFile'],dic['outputDir']+'/')
 	# Performing post-processing
 	postProcessing.postProcess(outputInfo)
 	# Deleting generated opus files
@@ -643,6 +646,11 @@ def overlay(pairList,outDirDic):
 		subprocess.call(cmd, shell=True,stdout=devnull,stderr=devnull)
 		for file in pair:watsonVals['combinedAudio'][file] = name
 
+# Function that copies a file from one directory to another.
+def copyFile(currentPath,newDirPath):
+	try:shutil.copy(currentPath,newDirPath)
+	except (shutil.Error,FileNotFoundError):pass
+	pass
 
 if __name__ == '__main__':
 

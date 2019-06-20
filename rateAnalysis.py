@@ -20,7 +20,10 @@ from big_phoney import BigPhoney				# Finds the syllables per word.
 import matplotlib.pyplot as plt 				# Library to visualize data
 from statsmodels import robust 					# Statistics library.
 import tensorflow as tf 						# Deep neural network library
+import operator									# Sorting library
+import copy 									# Copying module.
 import logging
+from termcolor import colored
 
 # Gailbot scripts
 from CHAT import constructTurn 					# Function to construct individual speaker turns.
@@ -39,23 +42,33 @@ delims = {
 	"fastSpeech" :  u'\u25B2'
 }
 
-
 # *** Definitions for speech rate analysis functions ***
 
+# Main driver function
 def analyzeSyllableRate(infoList):
-	turnList = constructTurn(infoList)
-	for dic in turnList:
+	# Copying original list so it is not modified.
+	infoListCopy = copy.deepcopy(infoList)
+	# Removing hesitation markers from list
+	infoListCopy = removeHesitation(infoListCopy)
+	# Constructing turns for all files in infoList.
+	infoListCopy = constructTurn(infoListCopy)
+	print(colored("\nAnalyzing syllable rate...",'red'))
+	for dic in infoListCopy:
+		print("Loading file: {0}\n".format(dic['jsonFile']))
 		# Finding the syllable rate.
 		dictionaryList = findSyllables(dic['jsonListTurns'])
 		# Getting stats values.
 		statsDic = stats(dictionaryList)
 		# Adding slow / fast speech delims to the transcript.
-		dic['jsonListTurns'] = addDelims(dictionaryList,statsDic)
-		# Visualizing the data.
+		# Adds delims to individual word jsonList.
+		dic['jsonList'] = addDelims(dictionaryList,statsDic,dic['jsonList'])
+		# Visuzlizing the data.
 		#visualize(dictionaryList)
+	for dicCopy,dic in zip(infoListCopy,infoList):
+		# Adding Hesitation markers back.
+		dic['jsonList'] = addHesitation(dicCopy,dic)
+	print(colored("Syllable rate analysis completed\n",'green'))
 	return infoList
-
-
 
 # *** Helper functions for speech rate analysis ***
 
@@ -88,16 +101,38 @@ def stats(dictionaryList):
 		"upperLimit" : upperLimit, "lowerLimit" : lowerLimit}
 
 
+
 # Function that adds fast / slow speech delimiters to the transcript
-def addDelims(dictionaryList,statsDic):
-	jsonListTurns = []
+def addDelims(dictionaryList,statsDic,jsonList):
+	jsonListTurns = [] ; words = []
 	for elem in dictionaryList:
 		if elem['syllRate'] <= statsDic['lowerLimit']: 
 			elem['elem'][3] = delims['slowSpeech'] + elem['elem'][3] + delims['slowSpeech']
 		elif elem['syllRate'] >= statsDic['upperLimit']: 
 			elem['elem'][3] = delims['fastSpeech'] + elem['elem'][3] + delims['fastSpeech']
 		jsonListTurns.append(elem['elem'])
-	return jsonListTurns
+	for elem in jsonListTurns:
+		for word in elem[3].split():words.append(word)
+	for word,elem in zip(words,jsonList[1:]): elem[3] = str(word)
+	return jsonList
+
+
+# Function that removes hesitation markers from jsonList
+def removeHesitation(infoList):
+	for dic in infoList:
+		dic['jsonList'] = [elem for elem in dic['jsonList'] if elem[3] != "%HESITATION"]
+	return infoList
+
+# Function that adds hesitation markers back
+# Input: Two dictionaries in infoList.
+# Returns: jsonList
+def addHesitation(dicCopy,dic):
+	jsonList = []
+	for elem in dicCopy['jsonList']:jsonList.append(elem)
+	for elem in dic['jsonList']:
+		if elem[3] == "%HESITATION":jsonList.append(elem)
+	jsonList[1:] = sorted(jsonList[1:], key = operator.itemgetter(1))
+	return jsonList
 
 # Function that visualizes the syllable rate to verify predictions
 def visualize(dictionaryList):
@@ -130,4 +165,11 @@ def visualize(dictionaryList):
 
 
 
-	
+
+
+
+
+
+
+
+

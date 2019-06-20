@@ -334,7 +334,7 @@ def run(username,password,out_dir,base_model,acoustic_id,language_id,
 	num_threads,opt_out,watson_token,audio_files,names,combined_audio,
 	contentType,customization_weight):
 
-	#sys.stderr.close()	# Suppressing error messages from the WebSocket library (Internal library bugs)
+	sys.stderr.close()	# Suppressing error messages from the WebSocket library (Internal library bugs)
 
 	# Checking parameters for correctness (Checked runtime Errors)
 	for k,v in out_dir.items():

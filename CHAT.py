@@ -21,6 +21,7 @@ import operator									# Sorting library
 import io
 import subprocess
 from prettytable import PrettyTable				# Table printing library
+import re 										# Regular expression library
 
 # *** Global variables / invariants ***
 
@@ -49,7 +50,7 @@ CHATheaders = {
 	"speaker2Gender" : "male",
 	"corpusLocation" : "HI_LAB",
 	"roomLayout" : "HI-LAB Duplex",
-	"situation" : "Lab",
+	"situation" : "Human Interaction Lab Tufts",
 	"speaker1Role" : "Unidentified",
 	"speaker2Role" : "Unidentified"
 }
@@ -66,6 +67,12 @@ shellCommands = {
 CHATsymbols = {
 	"latch" : u'\u2248'
 }
+
+# Name for the final CHAT file.
+CHATname = 'Results.cha'
+
+# List containing separate CSV headings.
+CSVfields = ['Speaker Label','Start Time','End Time','Transcript']
 
 # ***********************
 
@@ -281,12 +288,24 @@ vals_actions = {
 	'8' : valsDefault
 }
 
-# *** Definitions for CHAT file formatting functions ***
 
 # Wrapper function for CHAT_actions functions dictionary
 def formatCHAT(infoList):
 	for action in CHAT_actions.values(): infoList = action(infoList)
 	return infoList
+
+
+# *** Definitions for CHAT file formatting functions ***
+
+# Function that changes Watson comment markers
+# Input: Dictionay containing perocessed file information
+def commentMarkers(infoList):
+	for infoDic in infoList:
+		for elem in infoDic['jsonList'][1:]:
+			if elem[3].find("%HESITATION") != -1:
+				elem[3]=elem[3].replace("%HESITATION","[^ HESITATION ]")
+	return infoList
+
 
 # Function that constructs turn per individual CSV file based on turn construction 
 # thresholds.
@@ -308,9 +327,7 @@ def constructTurn(infoList):
 		for elem in jsonList: elem[3]=elem[3].translate({ord('.'):None}) 
 	return infoList
 
-
-# Function that transforms infoList such that dictionaries with common output 
-# directories are grouped.
+	# directories are grouped.
 # Input: list of individual dictionaries
 # Output: list of lists containing dictionaries.
 def groupDictionaries(infoList):
@@ -336,8 +353,8 @@ def combineTranscripts(infoList):
 		jsonListCombined = []
 		if len(item) == 1: 
 			item[0]['jsonListCombined'] = item[0]['jsonListTurns'];continue
-		for list1,list2 in zip(item[0]['jsonListTurns'],item[1]['jsonListTurns']):
-			jsonListCombined.extend([list1,list2])
+		for list1 in item[0]['jsonListTurns']: jsonListCombined.append(list1)
+		for list2 in item[1]['jsonListTurns']: jsonListCombined.append(list2)
 		jsonListCombined=sorted(jsonListCombined, key = operator.itemgetter(1))
 		for dic in item: dic['jsonListCombined'] = jsonListCombined
 	return infoList
@@ -346,6 +363,7 @@ def combineTranscripts(infoList):
 # Input: list of lists containing dictionaries.
 # Output : list of lists containing dictionaries.
 def overlaps(infoList):
+	markerLimit = 4 										# Minimum number of chars to have a marker
 	for item in infoList:
 		newList = []
 		jsonListCombined = item[0]['jsonListCombined']
@@ -353,6 +371,14 @@ def overlaps(infoList):
 			nxt = jsonListCombined[count+1]
 			if curr[2] > nxt[1]:
 				pos = overlapPositions(curr,nxt)			# Getting overlap marker positions
+				# Not adding markers if difference is below limit
+				if (abs(pos['posXcurr'] - pos['posYcurr']) <= markerLimit
+					or abs(pos['posXnxt'] - pos['posYnxt']) <= markerLimit):
+					newList.append(curr);continue
+				# Not adding markers if there is no character within limit
+				if (not re.search('[a-zA-Z]',curr[3][pos['posXcurr']:pos['posYcurr']])
+					or not re.search('[a-zA-Z]',curr[3][pos['posXcurr']:pos['posYcurr']])):
+					newList.append(curr);continue
 				# Adding overlap markers
 				newCurrTrans = curr[3][:pos['posXcurr']] +' < ' + curr[3][pos['posXcurr']:]
 				curr[3] = (newCurrTrans[:pos['posYcurr']] + ' > [>] ' + newCurrTrans[pos['posYcurr']:]).rstrip()
@@ -361,7 +387,8 @@ def overlaps(infoList):
 			newList.append(curr)
 		newList.append(jsonListCombined[-1])
 		for dic in item: dic['jsonListCombined'] = newList
-	return infoList		
+	return infoList	
+
 
 # Function that adds pause markers to the individual speaker transcripts.
 # Input: list of lists containing dictionaries.
@@ -398,47 +425,13 @@ def pauses(infoList):
 # Output : list of lists containing dictionaries.
 def combineSameSpeakerTurns(infoList):
 	for item in infoList:
-		newList = []
-		buffID = '0' ; buffTrans = '' ; buffStart = jsonListCombined
-		for count,curr in enumerate(jsonListCombined[:-1]):
-			nxt = jsonListCombined[count+1]
-			if curr[0] == buffID : buffTrans += ' ' + curr[3]
-			else: 
-				newList.append([buffID,buffStart,curr[2],buffTrans])
-
-
-
-
-	for item in infoList:
-		newList = [];changed = False
-		jsonListCombined = item[0]['jsonListCombined']
-		for count,curr in enumerate(jsonListCombined[:-1]):
-			if changed:changed = False;continue
-			nxt = jsonListCombined[count+1]
-			if curr[0] == nxt[0]:
-				newList.append([curr[0],curr[1],nxt[2],curr[3] + ' ' + nxt[3]])
-				changed = True
-			else:newList.append(curr)
-		if len(item)==2:newList.append(jsonListCombined[-1])
+		jsonListCombined = item[0]['jsonListCombined'] ; newList = []
+		for count,curr in enumerate(jsonListCombined):
+			if len(newList) == 0: newList.append(curr)
+			elif newList[-1][0] == curr[0]:
+				newList[-1][2] = curr[2] ; newList[-1][3] += ' '+curr[3]
+			else: newList.append(curr)
 		for dic in item: dic['jsonListCombined'] = newList
-
-
-		for elem in newList: print(elem)
-		sys.exit()
-	return infoList
-
-# Function that changes Watson comment markers
-# Input: list of lists containing dictionaries.
-# Output : list of lists containing dictionaries.
-def commentMarkers(infoList):
-	for item in infoList:
-		jsonListCombined = item[0]['jsonListCombined']
-		for count,curr in enumerate(jsonListCombined[:-1]):
-			if curr[3].find('%') != -1:
-				pos = curr[3][curr[3].find("%"):].find(' ')+(curr[3].find("%"))
-				curr[3] = curr[3].replace('%','[^ ') ; pos+=1
-				curr[3] = curr[3][:pos+1]+' ]'+curr[3][pos+1:]
-		for dic in item: dic['jsonListCombined'] = jsonListCombined
 	return infoList
 
 # Function that adds gaps to the transcript
@@ -446,8 +439,7 @@ def commentMarkers(infoList):
 # Output : list of lists containing dictionaries.
 def gaps(infoList):
 	for item in infoList:
-		newList = []
-		jsonListCombined = item[0]['jsonListCombined']
+		newList = [] ; jsonListCombined = item[0]['jsonListCombined']
 		for count,curr in enumerate(jsonListCombined[:-1]):
 			nxt = jsonListCombined[count+1]
 			diff = round(nxt[1] - curr[2],1)
@@ -487,12 +479,13 @@ def CHATList(infoList):
 		for dic in item:dic['CHATList'] = CHATList
 	return infoList
 
+
 # Function that writes a CHAT file
 # Input: list of lists containing dictionaries.
 # Output : list of lists containing dictionaries.
 def buildCHAT(infoList):
 	for item in infoList:
-		# Single file with two speakers.
+		# Assigning appropriate speaker names and ID's
 		names = []
 		if len(item) == 1: names = ([item[0]['names'][0],item[0]['names'][1]])
 		elif len(item) == 2: names = ([item[0]['names'][0],item[1]['names'][0]])
@@ -508,15 +501,13 @@ def buildCHAT(infoList):
 			"@ID:\t{0}|{1}|{4}||{2}|||{3}|||\n".format(CHATheaders['language'],CHATheaders['corpusName'],
 				CHATheaders['speaker2Gender'],CHATheaders['speaker2Role'],speakerID[1]),
 			"@Media:\t{0},audio\n".format(item[0]['audioFile'][:item[0]['audioFile'].find('.')]),
-			"@Comment:\t{0}, {1}\n".format(CHATheaders['corpusName'],CHATheaders['corpusLocation']),
-			"@Transcriber:\tSTT_system\n",
+			"@Transcriber:\tGailbot 3.0\n",		
 			"@Location:\t{0}\n".format(CHATheaders['corpusLocation']),
 			"@Room Layout:\t{0}\n".format(CHATheaders['roomLayout']),
 			"@Situation:\t{0}\n@New Episode\n".format(CHATheaders['situation'])
 		]
 		# Writing CHAT file.
-		#CHATfilename = item[0]['outputDir']+'/'+ item[0]['audioFile'][:item[0]['audioFile'].find('.')]+'-combined.cha'
-		CHATfilename = item[0]['outputDir']+'/'+ 'final.cha'
+		CHATfilename = item[0]['outputDir']+'/'+ item[0]['outputDir']+ '-' +CHATname
 		if os.path.isfile(CHATfilename): os.remove(CHATfilename)
 		with io.open(CHATfilename,"w",encoding = 'utf-8') as outfile:
 			for s in headers: outfile.write(s)
@@ -525,7 +516,9 @@ def buildCHAT(infoList):
 		for elem in item:elem['CHATfilename'] = CHATfilename
 	return infoList
 
-# Function that creates a CA file by running shell commands on the created CHAT file
+# Function that creates a CA file by running shell commands on the created CHAT file.
+# Input: list of lists containing dictionaries.
+# Output : list of lists containing dictionaries.
 def buildCA(infoList):
 	for item in infoList:
 		CHATfilename = item[0]['CHATfilename']
@@ -544,29 +537,33 @@ def buildCA(infoList):
 		os.rename(indentFilename,CAfilename)
 	return infoList
 
+
 # Function that writes all the different kinds of CSV files.
+# Input: list of lists containing dictionaries.
+# Output : list of lists containing dictionaries.
 def writeCSVs(infoList):
 	for item in infoList:
 		currItem = item[0]
 		csvName = currItem['CHATfilename'][:currItem['CHATfilename'].find('.')]+'.csv'
+		currItem['jsonListCombined'].insert(0,CSVfields)
 		writer = csv.writer(open(csvName, 'w'))
 		writer.writerows(currItem['jsonListCombined'])
 	return infoList
 
+
 # Dictionary of functions used to create a CHAT file
 CHAT_actions = {
-	#'1' : constructTurn,				# Input is list of individual dictionaries
-	# NOTE: '1' is being done in the rateAnalysis module.
-	'2' : groupDictionaries,			# Input is list of individual dictionaries
-	'3' : combineTranscripts,			# Input is list of lists containing dictionaries.
-	'4' : overlaps,						# Input is list of lists containing dictionaries.
-	'5' : pauses,						# Input is list of lists containing dictionaries.
-	'6' : combineSameSpeakerTurns,		# Input is list of lists containing dictionaries.
-	'7' : commentMarkers, 				# Input is list of lists containing dictionaries.
-	'8' : gaps,							# Input is list of lists containing dictionaries.
-	'9' : CHATList,						# Input is list of lists containing dictionaries.
-	'10' : buildCHAT,					# Input is list of lists containing dictionaries.
-	'11' : buildCA, 					# Input is list of lists containing dictionaries.
+	'1' : commentMarkers,
+	'2' : constructTurn,
+	'3' : groupDictionaries,
+	'4' : combineTranscripts,
+	'5' : overlaps,
+	'6' : pauses,
+	'7' : combineSameSpeakerTurns,
+	'8' : gaps,
+	'9' : CHATList,
+	'10' : buildCHAT,
+	'11' : buildCA,
 	'12' : writeCSVs
 }
 
@@ -595,18 +592,18 @@ def get_val(dic,key,type):
 # Input: current and next turn list
 # Returns: Dictionary defining the x and y overlap marker positions for both turn
 def overlapPositions(curr,nxt):
-	startDifference = curr[1] - nxt[1] ; endDifference = curr[2] - nxt[2]
+	startDifference = nxt[1]-curr[1] ; endDifference = curr[2] - nxt[2]
 	currLen = curr[2] - curr[1] ; nxtLen = nxt[2] - nxt[1]
 	sD = startDifference ; eD = endDifference ; cL = currLen ; nL = nxtLen
 	# In this case, the overlap is at nxt start and pos x of curr turn.
 	if startDifference > 0:
-		poxXnxt = 0 ; posXcurr = overlapPos(sD,cL,len(curr[3]))
+		posXnxt = 0 ; posXcurr = overlapPos(sD,cL,len(curr[3]))
 		# Case-1a: In this case, overlap ends at pos y of curr turn and end of nxt turn
 		if endDifference > 0:
-			posYxurr = overlapPos(eD,cL,len(curr[3])) ; posYnxt = len(nxt[3])
+			posYcurr = len(curr[3])- overlapPos(eD,cL,len(curr[3])) ; posYnxt = len(nxt[3])
 		# Case-1b: In this case, overlap ends at curr turn end and pos y from turn 2 end.
 		elif endDifference < 0:
-			posYcurr = len(curr[3]) ; posYnxt = overlapPos(eD,nL,len(nxt[3]))
+			posYcurr = len(curr[3]) ; posYnxt = len(nxt[3])-overlapPos(eD,nL,len(nxt[3]))
 		# Case-1c: In this case, overlap ends at both turn ends.
 		elif endDifference == 0:
 			posYcurr = len(curr[3]) ; posYnxt = len(nxt[3])
@@ -615,10 +612,10 @@ def overlapPositions(curr,nxt):
 		posXcurr = 0 ; posXnxt = overlapPos(sD,nL,len(nxt[3]))
 		# Case-2a: In this case, overlap ends at posY from curr turn start and end of nxt turn
 		if endDifference > 0:
-			posYcurr = overlapPos(eD,nL,len(nxt[3])) ; posYnxt = len(nxt[3])
+			posYcurr = len(curr[3])-overlapPos(eD,cL,len(curr[3])) ; posYnxt = len(nxt[3])
 		# Case-2b: In this case, overlap ends at curr turn ends and posY from nxt turn end.
 		elif endDifference < 0:
-			posYcurr = len(curr[3]) ; posYnxt = overlapPos(eD,nL,len(nxt[3]))
+			posYcurr = len(curr[3]) ; posYnxt = len(nxt[3])-overlapPos(eD,nL,len(nxt[3]))
 		# Case-2c: In this case, overlap ends at the end of both turns
 		elif endDifference == 0:
 			posYcurr = len(curr[3]) ; posYnxt = len(nxt[3])
@@ -627,10 +624,10 @@ def overlapPositions(curr,nxt):
 		posXcurr = 0 ; posXnxt = 0
 		# Case-3a: In this case, overlap ends at posY from curr turn start and end of nxt turn
 		if endDifference > 0:
-			posYcurr = overlapPos(eD,nL,len(nxt[3])) ; posYnxt = len(nxt[3])
+			posYcurr = len(curr[3])-overlapPos(eD,cL,len([3])) ; posYnxt = len(nxt[3])
 		# Case-3b: In this case, overlap ends at curr turn ends and posY from nxt turn end.
 		elif endDifference < 0:
-			posYcurr = 0 ; posYnxt = overlapPos(eD,nL,len(nxt[3]))
+			posYcurr = len(curr[3]) ; posYnxt = len(nxt[3])-overlapPos(eD,nL,len(nxt[3]))
 		# Case-3c: In this case, overlap ends at the end of both turns
 		elif endDifference == 0:
 			posYcurr = len(curr[3]) ; posYnxt = len(nxt[3])
@@ -651,16 +648,6 @@ def overlapPositions(curr,nxt):
 
 # Lambda function to calculate the pverlap positions
 overlapPos =lambda diff,Len,transLen : int(round((((abs(diff)/Len))*transLen)))
-
-
-if __name__ == '__main__':
-	interface(infoList)
-
-
-
-
-
-
 
 
 

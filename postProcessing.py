@@ -21,6 +21,7 @@ import itertools								# Iterates over lists
 # Gailbot scripts
 import CHAT										# Script to produce CHAT files.
 import rateAnalysis  							# Script to analyze speech rate.
+import laughAnalysis 							# Scropt to analyze laughter.
 
 
 # *** Global variables / invariants. ***
@@ -50,7 +51,7 @@ def jsonToCSV(infoList):
 		writer = csv.writer(open(filename, 'w'))
 		writer.writerows(jsonList)
 		# Updating dictionary
-		infoDic['csv'] = filename
+		infoDic['csv'] = filename                   # Adding individual csv filename.
 		infoDic['jsonList'] = jsonList				# Adding transcribed data to dictionary 					
 	return infoList
 
@@ -59,10 +60,11 @@ def jsonToCSV(infoList):
 
 # Dictionary of post-processing functions
 # input: InfoDic dictionary per output / input file.
-processingActions= {
-	'1' : jsonToCSV,
-	'2' : rateAnalysis.analyzeSyllableRate,
-	'3' : CHAT.formatCHAT	
+processingActions = {
+	'1' : jsonToCSV, 										# Converts json to csv
+	'2' : rateAnalysis.analyzeSyllableRate,					# Analyzing syllable rate
+	'3' : laughAnalysis.analyzeLaugh, 						# Analyzing laughter.
+	'4' : CHAT.formatCHAT	           						# Formatting and creating CHAT file.
 }
 
 # *** Helper functions ****
@@ -126,15 +128,18 @@ if __name__ == '__main__':
 	dic = {"outputDir" : "pair-0",
 			"jsonFile" : "pair-0/test2a-json.txt",
 			"audioFile" : "test2a-test2b-combined.wav",
-			"names" : ["SP1"]}
+			"names" : ["SP1"],
+			"individualAudioFile" : "pair-0/test2a.wav"}
 	dic2 = {"outputDir" : "pair-0",
 			"jsonFile" : "pair-0/test2b-json.txt",
 			"audioFile" : "test2a-test2b-combined.wav",
-			"names" : ["SP2"]}
+			"names" : ["SP2"],
+			"individualAudioFile" : "pair-0/test2b.wav"}
 	dic3 = {"outputDir" : "sample1",
 			"jsonFile" : "sample1/sample1-json.txt",
 			"audioFile" : "sample1.mp3",
-			"names" : ["SP1","SP2"]}
+			"names" : ["SP1","SP2"],
+			"individualAudioFile" : "sample1/sample1.mp3"}
 	dic4 = {"outputDir" : "vid",
 			"jsonFile" : "vid/vid-speaker1-json.txt",
 			"audioFile" : "vid-speaker1-vid-speaker2-combined.wav",
@@ -144,26 +149,8 @@ if __name__ == '__main__':
 			"audioFile" : "vid-speaker1-vid-speaker2-combined.wav",
 			"names" : ["SP2"]}
 
-	sampleInfo = [dic4,dic5]
+	sampleInfo = [dic3]
 	postProcess(sampleInfo)
-
-'''
-	dic = {"outputDir" : "vid",
-			"jsonFile" : "vid/vid-speaker1-json.txt",
-			"audioFile" : "vid-speaker1.wav",
-			"names" : ["SP1"]}
-	dic2 = {"outputDir" : "vid",
-			"jsonFile" : "vid/vid-speaker2-json.txt",
-			"audioFile" : "vid-speaker2.wav",
-			"names" : ['SP1,SP2'],
-			}
-	sampleInfo = [dic,dic2]
-	postProcess(sampleInfo)
-
-'''
-
-
-
 
 
 
