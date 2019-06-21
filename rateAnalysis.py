@@ -17,7 +17,6 @@ import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
 import librosa.display 							# Library to display signal.
 import numpy 									# Library to have multi-dimensional homogenous arrays.
 from big_phoney import BigPhoney				# Finds the syllables per word.
-import matplotlib.pyplot as plt 				# Library to visualize data
 from statsmodels import robust 					# Statistics library.
 import tensorflow as tf 						# Deep neural network library
 import operator									# Sorting library
@@ -104,13 +103,16 @@ def stats(dictionaryList):
 
 # Function that adds fast / slow speech delimiters to the transcript
 def addDelims(dictionaryList,statsDic,jsonList):
-	jsonListTurns = [] ; words = []
+	jsonListTurns = [] ; words = [] ; fastCount = 0 ; slowCount = 0
 	for elem in dictionaryList:
 		if elem['syllRate'] <= statsDic['lowerLimit']: 
 			elem['elem'][3] = delims['slowSpeech'] + elem['elem'][3] + delims['slowSpeech']
+			slowCount+=1
 		elif elem['syllRate'] >= statsDic['upperLimit']: 
 			elem['elem'][3] = delims['fastSpeech'] + elem['elem'][3] + delims['fastSpeech']
+			fastCount+=1
 		jsonListTurns.append(elem['elem'])
+	print("Fast turns found: {0}\nSlow turns found: {1}".format(slowCount,fastCount))
 	for elem in jsonListTurns:
 		for word in elem[3].split():words.append(word)
 	for word,elem in zip(words,jsonList[1:]): elem[3] = str(word)

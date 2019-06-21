@@ -15,7 +15,6 @@ import argparse 								# Library to extract input arguments
 import os, sys 									# General system libraries.
 import librosa									# Audio signal processing library.
 import keras 									# Deep learning framework.
-
 import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
 import librosa.display 							# Library to display signal.
 import numpy 									# Library to have multi-dimensional homogenous arrays.

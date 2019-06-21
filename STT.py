@@ -396,16 +396,7 @@ def run(username,password,out_dir,base_model,acoustic_id,language_id,
 	
 
 if __name__ == '__main__':
-
-
-	run(username ='7af17e06-b9dc-4fc0-bcfe-ec5dfe9a17ed',
-		password = '1GJceSXy7mbQ', out_dir = {"test-1.wav" : "test-1", "test2a.wav" : "test2a"}, base_model = "en-US_BroadbandModel",
-		acoustic_id = None, language_id = 'e7f08a83-1de2-4851-978a-81d2cafc4a9e', num_threads = 2, opt_out = True,
-		watson_token = 0, audio_files = ['test-1.wav','test2a.wav'], names = ['SP1','SP2'], combined_audio = '',
-		contentType = {"test-1.wav" : "audio/wav", "test2a.wav" : "audio/wav"}, customization_weight = 0.7)
-
-
-
+	pass
 
 
 

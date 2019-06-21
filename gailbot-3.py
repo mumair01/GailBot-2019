@@ -13,6 +13,24 @@
 	Initial development: 5/30/19	
 
 '''
+# *** Packaging libraries
+import tkinter
+import xgboost
+import sklearn.ensemble
+import sklearn.tree
+import pickle
+import pandas as pd
+import sklearn.neighbors.typedefs
+import sklearn.neighbors.quad_tree
+import sklearn.tree._utils
+import cython
+import sklearn
+import sklearn.utils._cython_blas
+import joblib
+from sklearn.preprocessing import StandardScaler
+ # ***
+
+
 import json
 import sys, time, os
 from termcolor import colored					# Text coloring library
@@ -149,7 +167,7 @@ def main_menu(username,password,closure):
 		watsonDefaults(username,password,closure)
 		recordDefaults(username,password,closure)
 		os.system('clear')
-		print(colored('Gailbot 3.0\nDeveloped by: Human Interaction Lab Tufts\n','red')
+		print(colored('Gailbot 0.3.0\nDeveloped by: Human Interaction Lab Tufts\n','red')
 			+'\nGailbot is an automated transcription system '
 			'that specializes in transcribing in the Conversation Analysis (CA) '
 			' format\n')

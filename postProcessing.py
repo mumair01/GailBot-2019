@@ -135,21 +135,8 @@ if __name__ == '__main__':
 			"audioFile" : "test2a-test2b-combined.wav",
 			"names" : ["SP2"],
 			"individualAudioFile" : "pair-0/test2b.wav"}
-	dic3 = {"outputDir" : "sample1",
-			"jsonFile" : "sample1/sample1-json.txt",
-			"audioFile" : "sample1.mp3",
-			"names" : ["SP1","SP2"],
-			"individualAudioFile" : "sample1/sample1.mp3"}
-	dic4 = {"outputDir" : "vid",
-			"jsonFile" : "vid/vid-speaker1-json.txt",
-			"audioFile" : "vid-speaker1-vid-speaker2-combined.wav",
-			"names" : ["SP1"]}
-	dic5 = {"outputDir" : "vid",
-			"jsonFile" : "vid/vid-speaker2-json.txt",
-			"audioFile" : "vid-speaker1-vid-speaker2-combined.wav",
-			"names" : ["SP2"]}
 
-	sampleInfo = [dic3]
+	sampleInfo = [dic,dic2]
 	postProcess(sampleInfo)
 
 
