@@ -365,7 +365,8 @@ def create_model(username,password, description,name):
 	if resp.status_code != 201:
 	   print("Failed to create model")
 	   print(resp.text)
-	   sys.exit(-1)
+	   #sys.exit(-1)
+	   return
 
 	respJson = resp.json()
 	customID = respJson['customization_id']
@@ -386,7 +387,8 @@ def add_corpus(username, password, filename,customID):
 	if r.status_code != 201:
 	   print("Failed to add corpus file")
 	   print(r.text)
-	   sys.exit(-1)
+	   #sys.exit(-1)
+	   return
 
 
 # Function that trains the model with the input data provided.
@@ -400,7 +402,8 @@ def train_model(username,password,customID):
 	print("Training request returns: ", r.status_code)
 	if r.status_code != 200:
 	   print("Training failed to start - exiting!")
-	   sys.exit(-1)
+	   #sys.exit(-1)
+	   return
 
 	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations/"+customID
 	r = requests.get(uri, auth=(username,password), verify=False, headers=headers)
@@ -412,6 +415,9 @@ def train_model(username,password,customID):
 	    r = requests.get(uri, auth=(username,password), verify=False, headers=headers)
 	    respJson = r.json()
 	    status = respJson['status']
+	    # Suspend training if failed
+	    if status == 'failed':
+	    	print(colored("Training Failed",'red')) ; return
 	    print("status: ", status, "(", time_to_run, ")")
 	    time_to_run += 10
 	print("Training complete!")
@@ -459,7 +465,7 @@ def add_multiple_words(username,password,interim_data,customID):
 
 
 if __name__ == '__main__':
- 	pass
+ 	interface(sys.argv[1],sys.argv[2])
 
 
 

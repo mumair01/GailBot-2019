@@ -13,23 +13,16 @@
 	Initial development: 5/30/19	
 
 '''
-# *** Packaging libraries
-import tkinter
-import xgboost
+
+# Libraries to build standalone executable.
 import sklearn.ensemble
 import sklearn.tree
-import pickle
-import pandas as pd
 import sklearn.neighbors.typedefs
 import sklearn.neighbors.quad_tree
 import sklearn.tree._utils
-import cython
 import sklearn
 import sklearn.utils._cython_blas
-import joblib
 from sklearn.preprocessing import StandardScaler
- # ***
-
 
 import json
 import sys, time, os
@@ -167,9 +160,9 @@ def main_menu(username,password,closure):
 		watsonDefaults(username,password,closure)
 		recordDefaults(username,password,closure)
 		os.system('clear')
-		print(colored('Gailbot 0.3.0\nDeveloped by: Human Interaction Lab Tufts\n','red')
+		print(colored('Gailbot 0.3.0\nDeveloped by: HUMAN INTERACTION LAB - TUFTS\n','red')
 			+'\nGailbot is an automated transcription system '
-			'that specializes in transcribing in the Conversation Analysis (CA) '
+			'that specializes in transcribing in the Conversation Analysis (CA)'
 			' format\n')
 		print("Use options 1 through 3 to configure and use Gailbot\n")
 		print("Please choose one of the following options:")
@@ -187,7 +180,7 @@ def recording_menu(username,password,closure):
 		x.title = colored("Audio recording settings",'red')
 		x.field_names = [colored('Setting','blue'),colored('Value','blue')]
 		x.add_row(['Current chunk size (bytes)',recordingVals['Recording_chunk_size']])
-		x.add_row(["Current audio format", recordingVals['Format']])
+		x.add_row(["Current audio format", formats[str(recordingVals['Format'])]])
 		x.add_row(["Current audio channels",recordingVals['channels']])
 		x.add_row(["Current recording rate (Hertz)",recordingVals['rate']])
 		x.add_row(["Current audio filename",recordingVals['audioFilename']])
@@ -264,18 +257,24 @@ def transcribe_new(username,password,closure):
 	watsonVals['contentType'] = setContentType(audioFormatMapping,watsonVals['files'])
 	# Setting speaker names
 	setSpeakers(watsonVals['files'],pairDic)
-	# Setting post-processing variables.
-	if not CHAT.main_menu({}): return
+
+	# Selecting post-processing modules to be implemented
+	if not postProcessing.main_menu(): return
+
 	if not request_menu(username,password,closure): return
 	# Sending request.
 	sendRequest(username,password,closure)
+	
 
 # Function that transcribes a pre-recorded conversation
 def transcribe_recorded(username,password,closure):
 	if getAudioFileList() == None: return
 
+	# Selecting post-processing modules to be implemented
+	if not postProcessing.main_menu(): return
+
 	# Setting post-processing variables.
-	if not CHAT.main_menu({}): return
+	#if not CHAT.main_menu({}): return
 
 	if not request_menu(username,password,closure): return 
 	sendRequest(username,password,closure)
@@ -452,15 +451,18 @@ def getAudioFileList(getVal=True):
 	audioTable.title = colored("Supported audio formats",'red')
 	videoTable.title = colored("Supported video formats",'red')
 	audioTable.field_names = [colored('Audio Format','blue'),colored('Extension','blue')]
-	videoTable.field_names = [colored('Video Format','blue'),colored('Extension','blue')]
+	videoTable.field_names = [colored('Video Format','blue'),colored('Extension','blue'),
+		colored("Audio channels",'blue')]
 	for k,v in audioFormatMapping.items():  audioTable.add_row([k,v])
-	for k,v in videoFormats.items(): videoTable.add_row([k,v])
+	for k,v in videoFormats.items(): videoTable.add_row([k,v,videoFormatChannels[v]])
 	print(audioTable)
 	print(videoTable)
 	print('\n')
 	while True:
-		print("Enter audio/video file names (space delimited)\n"
-		"Press 0 to go back to options\n")
+		print("Enter audio/video file name(s) (space delimited)")
+		print("NOTE: Use " + colored("'-pair [file-1] [file-2]'",'red'),
+			"to input an audio file pair part of a single conversation")
+		print("Press 0 to go back to options\n")
 		localDic = {}
 		if get_val(localDic,'files',list)==None: return
 		# Extracting pairs from the input list and removing -pair keyword
@@ -546,6 +548,9 @@ def sendRequest(username,password,closure):
 	# Restoring defaults after request
 	watsonDefaults(username,password,False)
 	recordDefaults(username,password,closure)
+	# Preventing the reactor from restarting.
+	time.sleep(0.5)
+	os.execl(sys.executable, sys.executable, *sys.argv)	
 
 # Function that converts audio to ogg / opus format.
 # Requires opusend exe : https://mf4.xiph.org/jenkins/view/opus/job/opus-tools/ws/man/opusenc.html

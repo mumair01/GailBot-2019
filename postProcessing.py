@@ -17,20 +17,98 @@ import json,csv
 import sys, time, os
 from termcolor import colored					# Text coloring library
 import itertools								# Iterates over lists
+import inquirer 								# Selection interface library.
+from prettytable import PrettyTable				# Table printing library
 
 # Gailbot scripts
 import CHAT										# Script to produce CHAT files.
 import rateAnalysis  							# Script to analyze speech rate.
-import laughAnalysis 							# Scropt to analyze laughter.
+import laughAnalysis 							# Script to analyze laughter.
+import soundAnalysis 							# Script to analyze different sound characterists.
+
 
 
 # *** Global variables / invariants. ***
+
+# post-processing module dictionary
+
+# Current selection status of the post-processing modules
+postModulesStatus = {
+	"syllRate": colored("Selected",'green'),
+	"laughter" : colored("Selected",'green'),
+	"sound" : colored("Selected",'green')
+}
+
+# Mapping between display name and key name
+mapping = {
+	"Syllable rate module" : "syllRate",
+	"Laughter detection module" : "laughter",
+	"Sound analysis module" : "sound"
+}
+
+# Mapping between key name and appropriate post-processing function
+funcMapping = {
+	"syllRate" : rateAnalysis.analyzeSyllableRate,	
+	"laughter" : laughAnalysis.analyzeLaugh,
+	"sound" : soundAnalysis.analyzeSound
+}
+
+# Mapping between a function to the local menu 
+menuMapping = {
+	CHAT.formatCHAT : CHAT.main_menu
+}
+
 
 # List containing separate CSV headings.
 CSVfields = ['Speaker Label','Start Time','End Time','Transcript','Confidence',
 			'Periodic','Recieved Audio', 'Result Index']
 
-# *** Menu functions ***
+
+# *** Menu function definitions ***
+
+# Function that implements the main menu.
+# Allows user to select the post-processing functions to implement.
+def main_menu():
+	while True:
+		os.system('clear')
+		x = PrettyTable()
+		x.title = colored("Post-processing interface",'red')
+		x.field_names = [colored("Module",'blue'),colored("Status",'blue')]
+		x.add_row(["Syllable rate module",postModulesStatus['syllRate']])
+		x.add_row(["Laughter detection module",postModulesStatus['laughter']])
+		x.add_row(["Sound analysis module",postModulesStatus['sound']])
+		print(x)
+		print("\nUse options 1 through 2 to select the post-processing modules " 
+			"to be implemented:")
+		print("\n1. Change selections")
+		print(colored("2. Proceed / Confirm selection\n",'green'))
+		choice = input(" >>  ")
+		if choice == '2':
+			return applyLocalMenu();
+		if choice == '1': 
+			moduleList = inquire(postModulesStatus)
+			createActionList(moduleList)
+
+# Helper function for the main menu
+def inquire(modules):
+	options = [
+			inquirer.Checkbox('postModules',
+				message="Post-processing modules",
+				choices=["Syllable rate module",
+				"Laughter detection module",
+				"Sound analysis module"],
+				),
+		]
+	print("\nSelect the post-processing modules to be implemented:\n")
+	print("Select --> Right arrow key")
+	print("Unselect --> Left arrow key")
+	print(colored("Proceed --> Enter / Return key\n",'green'))
+	modules = inquirer.prompt(options)
+	for key in mapping.keys():
+		if key in modules['postModules']: postModulesStatus[mapping[key]] = colored("Selected",'green')
+		else: postModulesStatus[mapping[key]] =colored("Not selected",'red')
+	return modules['postModules']
+
 
 # Main menu function
 # Input: Tuple/List containing information.
@@ -52,27 +130,18 @@ def jsonToCSV(infoList):
 		writer.writerows(jsonList)
 		# Updating dictionary
 		infoDic['csv'] = filename                   # Adding individual csv filename.
-		infoDic['jsonList'] = jsonList				# Adding transcribed data to dictionary 					
+		infoDic['jsonList'] = jsonList				# Adding transcribed data to dictionary 
+	# Removing file from list if it is not found.
+	infoList=[infoDic for infoDic in infoList if len(infoDic['jsonList']) > 1]				
 	return infoList
 
-
-# *** Post-Processing actions ***
-
-# Dictionary of post-processing functions
-# input: InfoDic dictionary per output / input file.
-processingActions = {
-	'1' : jsonToCSV, 										# Converts json to csv
-	'2' : rateAnalysis.analyzeSyllableRate,					# Analyzing syllable rate
-	'3' : laughAnalysis.analyzeLaugh, 						# Analyzing laughter.
-	'4' : CHAT.formatCHAT	           						# Formatting and creating CHAT file.
-}
 
 # *** Helper functions ****
 
 # Wrapper function that calls all processing functions
 # Input : List passed to main/postProcess
 def processWrapper(infoList):
-	for action in processingActions.values(): infoList = action(infoList)
+	for action in processingActions: infoList = action(infoList)
 
 # Function that assigns speaker names based on the number of speakers
 # Input: Transcribed word List + additional metrics from getJSON
@@ -91,7 +160,11 @@ def assignSpeakers(jsonList,namesList):
 def getJSON(infoDic):
 	jsonList = []
 	labels = {}
-	with open(infoDic['jsonFile']) as f: jsonObject = json.load(f)
+	try:
+		with open(infoDic['jsonFile']) as f: jsonObject = json.load(f)
+	except FileNotFoundError:
+		print(colored("ERROR: File not found: {}".format(infoDic['jsonFile']),'red'))
+		return []
 	for res in jsonObject:
 		if "speaker_labels" not in res:
 			# Extracting main fields
@@ -119,7 +192,26 @@ def getJSON(infoDic):
 	jsonList = assignSpeakers(jsonList,infoDic['names'])
 	return jsonList
 
+# List of functions to implement
+processingActions = [jsonToCSV,rateAnalysis.analyzeSyllableRate,
+		laughAnalysis.analyzeLaugh,soundAnalysis.analyzeSound,
+		CHAT.formatCHAT]
 
+# Function that creates the processingActions list
+def createActionList(moduleList):
+	global processingActions
+	actionList = [jsonToCSV]
+	for module in moduleList:  actionList.append(funcMapping[mapping[module]])
+	actionList.append(CHAT.formatCHAT)
+	processingActions = actionList.copy()
+
+
+# Function thacalls the local menus for post-processing functions being applied
+def applyLocalMenu():
+	for action in processingActions:
+		if action in menuMapping.keys():
+			if not menuMapping[action]({}): return False
+	return True
 
 
 if __name__ == '__main__':
@@ -135,8 +227,13 @@ if __name__ == '__main__':
 			"audioFile" : "test2a-test2b-combined.wav",
 			"names" : ["SP2"],
 			"individualAudioFile" : "pair-0/test2b.wav"}
+	dic3 = {"outputDir" : "sample1",
+			"jsonFile" : "sample1/sample1-json.txt",
+			"audioFile" : "sample1.mp3",
+			"names" : ["SP1","SP2"],
+			"individualAudioFile" : "sample1/sample1.mp3"}
 
-	sampleInfo = [dic,dic2]
+	sampleInfo = [dic3]
 	postProcess(sampleInfo)
 
 

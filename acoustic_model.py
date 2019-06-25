@@ -52,7 +52,7 @@ def main_menu(username,password,closure):
 		os.system('clear')
 		x = PrettyTable()
 		x.field_names = [colored('Setting','blue'),colored('Value','blue')]
-		x.add_row(["Default mode",base_model])
+		x.add_row(["Default model",base_model])
 		x.add_row(["Current custom model",str(output["acoustic-model"])])
 		print("Welcome to Gailbot's custom " + colored('acoustic model','red')+ " interface!\n")
 		print('Use options 1 through 3 to select the model(s) that you would like to use.\n'
@@ -271,10 +271,12 @@ def add_audio(username,password,filename,customID):
 
 	if len(AudioSegment.from_file(filename)) <= 600000:
 		print('Error: The audio file must be at least 10 minutes long')
-		sys.exit(-1)
+		#sys.exit(-1)
+		return
 	if check_extension(filename,'wav') == False:
 		print("Error: Wav audio file expected")
-		sys.exit(-1)
+		#sys.exit(-1)
+		return
 	print('\nAdding audio file...')
 	name = filename[:filename.rfind('.')]
 	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/acoustic_customizations/{0}/audio/{0}".format(customID,name)
@@ -286,6 +288,7 @@ def add_audio(username,password,filename,customID):
 	   print("Failed to add audio file")
 	   print(r.text)
 	   sys.exit(-1)
+	   return
 
 	print('Checking status of audio analysis...')
 	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/acoustic_customizations/{0}/audio/{0}".format(customID,name)
@@ -300,6 +303,7 @@ def add_audio(username,password,filename,customID):
 	    if respJson['status'] == 'invalid':
 	    	print('Error: Audio file size exceeds 100 MB')
 	    	sys.exit(-1)
+	    	return
 	    status = respJson['status']
 	    print("status: ", status, "(", time_to_run, ")")
 	    time_to_run += 10
@@ -318,6 +322,7 @@ def train_model(username,password,customID):
 	if r.status_code != 200:
 	   print("Training failed to start - exiting!")
 	   sys.exit(-1)
+	   return
 
 	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/acoustic_customizations/{0}".format(customID)
 	r = requests.get(uri, auth=(username,password), verify=False, headers=headers)
@@ -347,6 +352,7 @@ def create_model(username,password, description,name):
 	   print("Failed to create acoustic model")
 	   print(resp.text)
 	   sys.exit(-1)
+	   return
 
 	respJson = resp.json()
 	customID = respJson['customization_id']
@@ -362,7 +368,7 @@ def delete_model(username,password,customID):
 
 
 if __name__ == '__main__':
- 	pass
+ 	interface(sys.argv[1],sys.argv[2])
 
 
 

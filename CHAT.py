@@ -30,7 +30,7 @@ import re 										# Regular expression library
 CHATVals = {
 	"gap" : 0.3,
 	"lowerBoundLatch" : 0.01,
-	"upperBoundLatch" : 0.05,
+	"upperBoundLatch" : 0.09,
 	"lowerBoundPause" : 0.2,
 	"upperBoundPause" : 1.0,
 	"lowerBoundMicropause" : 0.1,
@@ -97,7 +97,7 @@ def main_menu(closure):
 	while True:
 		os.system('clear')
 		print("Welcome to Gailbot's " + colored('CHAT generation module','red') + " interface!\n")
-		print("Use options 1 through 3 to configure CHAT variables\n")
+		print("Use options 1 through 4 to configure CHAT variables\n")
 		print("Please choose one of the following options:")
 		print("1. Modify CHAT file headers")
 		print("2. Modify CHAT file transcription parameters")
@@ -127,7 +127,7 @@ def headers_menu(closure):
 		print(x)
 		print("\nPlease choose one of the following options:")
 		print("1. Modify corpus name")
-		print("2. Modify corpus languaget")
+		print("2. Modify corpus language")
 		print("3. Modify corpus location")
 		print("4. Modify corpus room layout")
 		print("5. Modify corpus situation")
@@ -169,7 +169,7 @@ def vals_menu(closure):
 		print("6. Modify lower bound - laugh length")
 		print("7. Modify gap length")
 		print("8. Reset selections to default values")
-		print(colored("9. Proceed / Confirm selection",'green'))
+		print(colored("9. Proceed / Confirm selection\n",'green'))
 		choice = input(" >>  ")
 		if choice == '9' : return
 		exec_menu(choice,vals_actions,closure)
@@ -291,7 +291,11 @@ vals_actions = {
 
 # Wrapper function for CHAT_actions functions dictionary
 def formatCHAT(infoList):
+	print(colored("Generating CHAT/CA file(s)\n",'blue'))
+	for infoDic in infoList:
+		print("Loading file: {}".format(infoDic['jsonFile']))
 	for action in CHAT_actions.values(): infoList = action(infoList)
+	print(colored("\nCHAT/CA file generation complete",'green'))
 	return infoList
 
 
@@ -400,19 +404,19 @@ def pauses(infoList):
 		for count,curr in enumerate(jsonListCombined[:-1]):
 			nxt = jsonListCombined[count+1]
 			if curr[0] != nxt[0]:newList.append(curr);continue
-			diff = round(nxt[1] - curr[2],1)
+			diff = round(nxt[1] - curr[2],2)
 			# In this case, the latch marker is added.
 			if diff >= CHATVals['lowerBoundLatch'] and diff <= CHATVals['upperBoundLatch']:
 				curr[3] += ' ' + CHATsymbols['latch'] + ' '
 			# In this case, the normal pause markers are added.
 			elif diff >= CHATVals['lowerBoundPause'] and diff <= CHATVals['upperBoundPause']:
-				curr[3] += ' (' + str(diff) + ') '
+				curr[3] += ' (' + str(round(diff,1)) + ') '
 			# In this case, micropause markers are added.
 			elif diff >= CHATVals['lowerBoundMicropause']and diff <= CHATVals['upperBoundMicropause']:
 				curr[3] += ' (.) '
 			# In this case, very large pause markers are added
 			elif diff > CHATVals['LargePause']:
-				largePause = ['*PAU',curr[2],nxt[1],'(' + str(diff) + ')']
+				largePause = ['*PAU',curr[2],nxt[1],'(' + str(round(diff,1)) + ')']
 				newList.extend([curr,largePause]) ; continue
 			newList.append(curr)
 		newList.append(jsonListCombined[-1])
@@ -442,9 +446,9 @@ def gaps(infoList):
 		newList = [] ; jsonListCombined = item[0]['jsonListCombined']
 		for count,curr in enumerate(jsonListCombined[:-1]):
 			nxt = jsonListCombined[count+1]
-			diff = round(nxt[1] - curr[2],1)
+			diff = round(nxt[1] - curr[2],2)
 			if diff >= CHATVals['gap']:
-				gap = ['*GAP',curr[2],nxt[1],'(' + str(diff) + ')']
+				gap = ['*GAP',curr[2],nxt[1],'(' + str(round(diff,1)) + ')']
 				newList.extend([curr,gap]);
 			else:newList.append(curr)
 		newList.append(jsonListCombined[-1])
@@ -528,13 +532,21 @@ def buildCA(infoList):
 		devnull = open(os.devnull, 'w')
 		# Creating CA file 
 		cmd_CA = shellCommands['CHAT2CA'].format(CHATfilename)
-		subprocess.call(cmd_CA, shell=True,stdout = devnull,stderr = devnull)
+		try: subprocess.check_call(cmd_CA,shell=True,stdout=devnull,stderr=devnull)
+		except subprocess.CalledProcessError: 
+			print(colored("\nCHAT to CAlite conversion: FAILED",'red'))
+			print("Missing executable: jeffersonize\n")
 		# Indenting the CA file
 		cmd_indent = shellCommands['indentCA'].format(CAfilename)
-		subprocess.call(cmd_indent, shell=True,stdout = devnull, stderr = devnull)
+		try: subprocess.check_call(cmd_indent,shell=True,stdout=devnull,stderr=devnull)
+		except subprocess.CalledProcessError: 
+			print(colored("\nCA file indentation: FAILED",'red'))
+			print("Missing executable: indent\n")
 		# Renaming the files
-		os.remove(CAfilename)
-		os.rename(indentFilename,CAfilename)
+		try:
+			os.remove(CAfilename)
+			os.rename(indentFilename,CAfilename)
+		except: pass
 	return infoList
 
 
@@ -581,7 +593,7 @@ def get_val(dic,key,type):
 				return True
 			else: 
 				choice = type(input(" >> "))
-				if len(choice) == 0:continue
+				#if len(choice) == 0:continue
 				if choice == type(0): return None
 				else: 
 					dic[key] = choice

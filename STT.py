@@ -27,6 +27,8 @@ import argparse                    # for parsing arguments
 import base64                      # necessary to encode in base64
 #                                  # according to the RFC2045 standard
 import requests                    # python HTTP requests library
+import time 					   # Python timing library
+from termcolor import colored					# Text coloring library
 
 # WebSockets
 from autobahn.twisted.websocket import WebSocketClientProtocol, \
@@ -34,6 +36,8 @@ from autobahn.twisted.websocket import WebSocketClientProtocol, \
 from twisted.python import log	
 from twisted.internet import ssl, reactor
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Invariants / Global variables
 
@@ -310,6 +314,16 @@ def check_positive_int(value):
 	            '"%s" is an invalid positive int value' % value)
 	return ivalue
 
+# Function that checks all files in a list exist
+def verifyFiles(audio_files):
+	newList = []
+	for file in audio_files:
+		if not os.path.isfile(file):
+			print(colored("\nERROR: File not found: {}\nRemoving"
+			" from transcription list\n".format(file),'red'))
+		else: newList.append(file)
+	return newList
+
 # Main function that interacts with Watson STT
 '''
 	out_dir = output directory name dictionary (Filename : Directory)
@@ -334,7 +348,11 @@ def run(username,password,out_dir,base_model,acoustic_id,language_id,
 	num_threads,opt_out,watson_token,audio_files,names,combined_audio,
 	contentType,customization_weight):
 
-	sys.stderr.close()	# Suppressing error messages from the WebSocket library (Internal library bugs)
+	#sys.stderr.close()	# Suppressing error messages from the WebSocket library (Internal library bugs)
+	print(colored("Initiating transcription process..\n",'blue'))
+
+	# Removing files that do not exist
+	audio_files = verifyFiles(audio_files)
 
 	# Checking parameters for correctness (Checked runtime Errors)
 	for k,v in out_dir.items():
@@ -388,10 +406,11 @@ def run(username,password,out_dir,base_model,acoustic_id,language_id,
 		connectWS(factory,contextFactory)								# Connecting to the given url using a WebSocket Connection.
 
 	# Moves the reactor to running state.
-	# Twisted Reactor library python: https://twistedmatrix.com/documents/current/api/twisted.internet.interfaces.IReactorCore.html#run
+	# Twisted Reactor library python: https://twistedmatrix.com/documents/current/api/twisted.internet.interfaces.IReactorCore.html
 	reactor.run()
 
 	# Returning information dictionary
+	print(colored("\nTranscription process successful",'green'))
 	return outputInfo
 	
 

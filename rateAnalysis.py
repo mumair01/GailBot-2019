@@ -13,8 +13,8 @@
 
 
 import os, sys
-import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
-import librosa.display 							# Library to display signal.
+#import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
+#import librosa.display 							# Library to display signal.
 import numpy 									# Library to have multi-dimensional homogenous arrays.
 from big_phoney import BigPhoney				# Finds the syllables per word.
 from statsmodels import robust 					# Statistics library.
@@ -51,9 +51,9 @@ def analyzeSyllableRate(infoList):
 	infoListCopy = removeHesitation(infoListCopy)
 	# Constructing turns for all files in infoList.
 	infoListCopy = constructTurn(infoListCopy)
-	print(colored("\nAnalyzing syllable rate...",'red'))
+	print(colored("\nAnalyzing syllable rate...\n",'blue'))
 	for dic in infoListCopy:
-		print("Loading file: {0}\n".format(dic['jsonFile']))
+		print("Loading file: {0}".format(dic['jsonFile']))
 		# Finding the syllable rate.
 		dictionaryList = findSyllables(dic['jsonListTurns'])
 		# Getting stats values.
@@ -112,7 +112,7 @@ def addDelims(dictionaryList,statsDic,jsonList):
 			elem['elem'][3] = delims['fastSpeech'] + elem['elem'][3] + delims['fastSpeech']
 			fastCount+=1
 		jsonListTurns.append(elem['elem'])
-	print("Fast turns found: {0}\nSlow turns found: {1}".format(slowCount,fastCount))
+	print("Fast turns found: {0}\nSlow turns found: {1}\n".format(slowCount,fastCount))
 	for elem in jsonListTurns:
 		for word in elem[3].split():words.append(word)
 	for word,elem in zip(words,jsonList[1:]): elem[3] = str(word)
@@ -135,6 +135,8 @@ def addHesitation(dicCopy,dic):
 		if elem[3] == "%HESITATION":jsonList.append(elem)
 	jsonList[1:] = sorted(jsonList[1:], key = operator.itemgetter(1))
 	return jsonList
+
+'''
 
 # Function that visualizes the syllable rate to verify predictions
 def visualize(dictionaryList):
@@ -159,7 +161,7 @@ def visualize(dictionaryList):
 	plt.show()
 
 
-
+'''
 
 
 

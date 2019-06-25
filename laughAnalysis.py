@@ -15,8 +15,8 @@ import argparse 								# Library to extract input arguments
 import os, sys 									# General system libraries.
 import librosa									# Audio signal processing library.
 import keras 									# Deep learning framework.
-import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
-import librosa.display 							# Library to display signal.
+#import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
+#import librosa.display 							# Library to display signal.
 import numpy 									# Library to have multi-dimensional homogenous arrays.
 import scipy.signal as signal					# Used to apply the lowpass filter.
 import tensorflow as tf 						# Deep neural network library
@@ -27,13 +27,9 @@ from termcolor import colored
 # Gailbot scripts
 import CHAT										# Script to produce CHAT files.
 
-tf.get_logger().setLevel(logging.ERROR) 		# Turning off tensorflow debugging messages.
-
-# Disabling any warnings.
-def warn(*args, **kwargs):
-    pass
-import warnings
-warnings.warn = warn
+# Just disables the warning, doesn't enable AVX/FMA
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # *** Global variables / invariants ***
 
@@ -51,15 +47,18 @@ modelPath = './model.h5'
 # 		Uses dic['individualAudioFile']
 def analyzeLaugh(infoList):
 	# Loading the existing trained and compiled model to detect laughter.
-	model = keras.models.load_model(modelPath)
-	print(colored("\nAnalyzing laughter...",'red'))
+	print(colored("Analyzing laughter...",'blue'))
+	try: model = keras.models.load_model(modelPath,compile=False)
+	except OSError:
+		print(colored("\nLaughter analysis unsuccessful",'red'))
+		print("File missing: {}\n".format(modelPath)) ; return infoList
 	for dic in infoList:
 		dic['jsonList'] = segmentLaugh(audioFile= dic['individualAudioFile'],
 			modelPath=modelPath,outputPath=dic['outputDir'],
 			threshold=CHAT.CHATVals['lowerBoundLaughAcceptance'],
 			minLength=CHAT.CHATVals['LowerBoundLaughLength'],
 			jsonList=dic['jsonList'],model=model)
-	print(colored("Laughter analysis completed\n",'green'))
+	print(colored("\nLaughter analysis completed\n",'green'))
 	return infoList
 
 # Function that calls all relevant laughter analysis functions
@@ -70,11 +69,12 @@ def analyzeLaugh(infoList):
 # Returns: Transcribed audio list / jsonList.
 def segmentLaugh(audioFile, modelPath, outputPath,threshold, minLength,
 	jsonList,model):
-	print("Loading audio file: {0}".format(audioFile))
+	print("\nLoading audio file: {0}".format(audioFile))
 
 	# Loading the audio signal as a time series and obtaining its sampling rate.
-	timeSeries, samplingRate = librosa.load(audioFile,sr =AUDIO_SAMPLE_RATE)
-
+	try: timeSeries, samplingRate = librosa.load(audioFile,sr =AUDIO_SAMPLE_RATE)
+	except FileNotFoundError:
+		print(colored("ERROR: File not found: {}".format(audioFile),'red')) ; return jsonList
 	# Getting a list of different audio features for analysis.
 	featureList = getFeatureList(timeSeries,samplingRate)
 
