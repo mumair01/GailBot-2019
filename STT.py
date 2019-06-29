@@ -43,6 +43,10 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 IBM_host = "stream.watsonplatform.net"				# Name of the IBM host / service.
 STT_service = "speech-to-text"						# Speech to Text service name.
+IDModels = ["en-US_BroadbandModel",  				# Base models that return speaker ID's
+			"en-GB_BroadbandModel",
+			"en-US_ShortForm_NarrowbandModel",
+			"en-US_NarrowbandModel"]
 
 opt_out_key = "X-Watson-Learning-Opt-Out"			# Opt out key for header sent to STT
 Watson_token_key = "X-Watson-Authorization-Token"	# Key for using Watson instead of access tokens for authentication.
@@ -71,7 +75,8 @@ class Utilities:
 		resp = requests.get(uri,auth=auth,verify=True,headers=headers,
 			timeout=(30,30))
 		jsonObject = resp.json()			# Converting response into a serialized dictionary.
-		return jsonObject['token']			# Returning authentication token recieved from service.		
+		if 'token' in jsonObject: return jsonObject['token']	# Returning authentication token recieved from service.
+		return None		
 
 
 # This class acts as a factory for producing instances of the WebSocket protocol.
@@ -131,7 +136,7 @@ class WSInterfaceFactory(WebSocketClientFactory):
 		try:
 			audioSampleInfo = self.protocolQueue.get_nowait()			# Getting audio sample information to be sent to service.
 			protocol = WSInterfaceProtocol(self,self.queue, 
-				self.customization_weight,self.custom)
+				self.customization_weight,self.custom,self.base_model)
 			protocol.finalCheck(audioSampleInfo)						# Performing final checks before sending Audio sample.
 			return protocol
 		# The Queue should never be empty.
@@ -158,7 +163,7 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 		custom : Indicates if a custom language model is being used.
 	'''
 	def __init__(self, factory, queue,customization_weight,
-		custom):
+		custom,base_model):
 		self.factory = factory 								# Current Factoy Protocol.
 		self.queue = queue 									# Initial queue set up for threading.
 		self.listening_state_count = 0						# Count for the number of state messages recieved.
@@ -168,6 +173,7 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 		self.customization_weight = customization_weight
 		self.custom = custom
 		self.resultIndex = 0
+		self.base_model = base_model
 		super(self.__class__,self).__init__()				# Initializing the current class and the parent class.
 
 	# Function to performs a final check before audio sample is sent.
@@ -177,7 +183,11 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 		self.dirOutput = audioSampleInfo[2]
 		self.sampleNumber = audioSampleInfo[1]
 		self.sampleName = audioSampleInfo[0]
-		self.jsonFile = self.dirOutput + "/" +self.sampleName[:self.sampleName.rfind(".")]+"-json.txt"
+		if self.sampleName.find('/') == -1:
+			self.jsonFile = self.dirOutput + "/" +self.sampleName[:self.sampleName.rfind(".")]+"-json.txt"
+		else:
+			name = self.sampleName[self.sampleName.find('/')+1:]
+			self.jsonFile = self.dirOutput + "/" +name[:name.rfind(".")]+"-json.txt"
 		# Removing json file data will be written to if it already exists.
 		try : os.remove(self.jsonFile)
 		except OSError : pass
@@ -215,6 +225,9 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 	# possible.
 	def onOpen(self):
 		print("Opening API Connection")
+		# Setting labels off for non standrd base_model
+		if self.base_model not in IDModels:labels = False
+		else: labels = True
 		params = {
 			"action":"start",												# Sent as initialization to Watson
 			"continuous" : True,											# Prevents timeout due to inactivity.
@@ -226,7 +239,7 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 			"processing_metrics": True,										# Detailed service analysis notes
 			"profanity_filter":False,										# Profanity
 			"timestamps":True,												# Word timing data
-			"speaker_labels":True,											# Labels to identify diffenrent individuals in conversation
+			"speaker_labels":labels,										# Labels to identify diffenrent individuals in conversation
 			'word_confidence': True,										# Confidence values for the words
 		}
 		# Adding customization weight only if custom model is being used.
@@ -280,7 +293,6 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 		print("\nClosing API WebSocket connection")
 		print('Websocket Connection closed:\n\tCode: {0}\n\tReason: {1}\n'
 		'\twasClean: {2}'.format(code,reason,wasClean))
-
 		# Dumping results to a json file.
 		with open(self.jsonFile,"a") as f: f.write(json.dumps(self.json_output, indent=4,sort_keys=True))
 
@@ -289,6 +301,9 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 				"jsonFile" : self.jsonFile,
 				"audioFile" : self.sampleName,
 				"names" : self.names}
+		# Deleting output files for an abnormal connection. 1000 = clean connection
+		if code != 1000: dic['delete'] = True
+		else: dic['delete'] = False
 		outputInfo.append(dic)
 
 		# Marking the task as done
@@ -366,7 +381,7 @@ def run(username,password,out_dir,base_model,acoustic_id,language_id,
 	headers = {opt_out_key : '1'} if opt_out else {}
 
 	# Authenticating using Watson tokens.
-	if watson_token:
+	if watson_token == 1:
 		headers[Watson_token_key] = (Utilities.getAuthenticationToken(
 			'https://'+IBM_host,STT_service,username,password))
 	else:
@@ -410,7 +425,7 @@ def run(username,password,out_dir,base_model,acoustic_id,language_id,
 	reactor.run()
 
 	# Returning information dictionary
-	print(colored("\nTranscription process successful",'green'))
+	print(colored("\nTranscription process completed\n",'green'))
 	return outputInfo
 	
 

@@ -16,7 +16,7 @@ import os, sys 									# General system libraries.
 import librosa									# Audio signal processing library.
 import keras 									# Deep learning framework.
 #import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
-#import librosa.display 							# Library to display signal.
+#import librosa.display 						# Library to display signal.
 import numpy 									# Library to have multi-dimensional homogenous arrays.
 import scipy.signal as signal					# Used to apply the lowpass filter.
 import tensorflow as tf 						# Deep neural network library

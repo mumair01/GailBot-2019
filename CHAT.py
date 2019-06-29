@@ -22,6 +22,10 @@ import io
 import subprocess
 from prettytable import PrettyTable				# Table printing library
 import re 										# Regular expression library
+import shutil
+
+# Gailbot scripts
+import rateAnalysis
 
 # *** Global variables / invariants ***
 
@@ -38,7 +42,8 @@ CHATVals = {
 	"LargePause" : 1.0,
 	"turnEndThreshold" : 0.1,
 	"lowerBoundLaughAcceptance" : 0.4,
-	"LowerBoundLaughLength" : 0.05
+	"LowerBoundLaughLength" : 0.05,
+	"beatsMode" : False
 }
 CHATValsOriginal = CHATVals.copy()
 
@@ -159,6 +164,7 @@ def vals_menu(closure):
 		x.add_row(["Current lower bound - laugh probability",CHATVals['lowerBoundLaughAcceptance']])
 		x.add_row(["Current lower bound - laugh length",CHATVals['LowerBoundLaughLength']])
 		x.add_row(["Current turn end threshold",CHATVals['turnEndThreshold']])
+		x.add_row(["Beat transcription mode", CHATVals['beatsMode']])
 		print(x)
 		print("\nPlease choose one of the following options:")
 		print("1. Modify lower and upper bound - latch")
@@ -168,10 +174,11 @@ def vals_menu(closure):
 		print("5. Modify lower bound - laugh probability")
 		print("6. Modify lower bound - laugh length")
 		print("7. Modify gap length")
-		print("8. Reset selections to default values")
-		print(colored("9. Proceed / Confirm selection\n",'green'))
+		print('8. Modify pause transcription mode (Beats / Absolute)')
+		print("9. Reset selections to default values")
+		print(colored("10. Proceed / Confirm selection\n",'green'))
 		choice = input(" >>  ")
-		if choice == '9' : return
+		if choice == '10' : return
 		exec_menu(choice,vals_actions,closure)
 
 # Actions for the main menu
@@ -274,6 +281,9 @@ def modifyGap(closure):
 	print("Enter gap length\nPress 0 to go to back to options\n")
 	get_val(CHATVals,"gap",float)
 
+def modifyBeatMode(closure):
+	CHATVals['beatsMode'] = not CHATVals['beatsMode']
+
 def valsDefault(closure):
 	for k,v in CHATValsOriginal.items(): CHATVals[k] = v
 
@@ -285,17 +295,20 @@ vals_actions = {
 	'5' : modifyLaughProb,
 	'6' : modifyLaughLen,
 	'7' : modifyGap,
-	'8' : valsDefault
+	'8' : modifyBeatMode,
+	'9' : valsDefault
 }
 
 
 # Wrapper function for CHAT_actions functions dictionary
 def formatCHAT(infoList):
-	print(colored("Generating CHAT/CA file(s)\n",'blue'))
+	print(colored("\nGenerating CHAT/CA file(s)\n",'blue'))
 	for infoDic in infoList:
 		print("Loading file: {}".format(infoDic['jsonFile']))
-	for action in CHAT_actions.values(): infoList = action(infoList)
-	print(colored("\nCHAT/CA file generation complete",'green'))
+	for action in CHAT_actions.values(): 
+		infoList = action(infoList)
+		if len(infoList) == 0: return infoList
+	print(colored("\nCHAT/CA file generation completed\n",'green'))
 	return infoList
 
 
@@ -321,7 +334,7 @@ def constructTurn(infoList):
 		jsonList = [elem[:4] for elem in jsonList]				# Extracting transcription relevent data.
 		while count < len(jsonList) - 1:
 			curr = jsonList[count] ; nxt = jsonList[count+1]
-			if nxt[1] - curr[2] <= CHATVals['turnEndThreshold']:
+			if nxt[1] - curr[2] <= CHATVals['turnEndThreshold'] and curr[0] == nxt[0]:
 				changed = True
 				jsonList[count] = [curr[0],curr[1],nxt[2],curr[3]+" "+nxt[3]]
 				del jsonList[count+1]
@@ -331,7 +344,7 @@ def constructTurn(infoList):
 		for elem in jsonList: elem[3]=elem[3].translate({ord('.'):None}) 
 	return infoList
 
-	# directories are grouped.
+# directories are grouped.
 # Input: list of individual dictionaries
 # Output: list of lists containing dictionaries.
 def groupDictionaries(infoList):
@@ -344,7 +357,7 @@ def groupDictionaries(infoList):
 	for a,b in itertools.combinations(infoList,2):
 		if a['outputDir'] not in dirs: 
 			newInfo.append([a]);dirs.append(a['outputDir'])
-		elif b['outputDir'] not in dirs: 
+		if b['outputDir'] not in dirs: 
 			newInfo.append([b]);dirs.append(b['outputDir'])
 	return newInfo
 
@@ -394,15 +407,26 @@ def overlaps(infoList):
 	return infoList	
 
 
-# Function that adds pause markers to the individual speaker transcripts.
+# Function that adds pause markers to the combined speaker transcripts.
+# Pauses added to combined list to prevent end of line pause transcriptions.
 # Input: list of lists containing dictionaries.
 # Output : list of lists containing dictionaries.
 def pauses(infoList):
 	for item in infoList:
+		# Setting absolute / beats transcription mode.
+		if CHATVals['beatsMode']: 
+			syllPerSec = calcSyllPerSec(item[0]['jsonListCombined'])
+			pause = beatsTiming ; closure = syllPerSec
+		else: 
+			syllPerSec = None ; pause = absoluteTiming
+			closure = CHATVals['upperBoundMicropause']
+		for dic in item: dic['syllPerSec'] = syllPerSec
+		# Adding pause markers
 		newList = []
 		jsonListCombined = item[0]['jsonListCombined']
 		for count,curr in enumerate(jsonListCombined[:-1]):
 			nxt = jsonListCombined[count+1]
+			# Only add pauses if current and next speaker is the same.
 			if curr[0] != nxt[0]:newList.append(curr);continue
 			diff = round(nxt[1] - curr[2],2)
 			# In this case, the latch marker is added.
@@ -410,18 +434,19 @@ def pauses(infoList):
 				curr[3] += ' ' + CHATsymbols['latch'] + ' '
 			# In this case, the normal pause markers are added.
 			elif diff >= CHATVals['lowerBoundPause'] and diff <= CHATVals['upperBoundPause']:
-				curr[3] += ' (' + str(round(diff,1)) + ') '
+				curr[3] += pause(diff,closure)
 			# In this case, micropause markers are added.
 			elif diff >= CHATVals['lowerBoundMicropause']and diff <= CHATVals['upperBoundMicropause']:
-				curr[3] += ' (.) '
+				curr[3] += pause(diff,closure)
 			# In this case, very large pause markers are added
 			elif diff > CHATVals['LargePause']:
-				largePause = ['*PAU',curr[2],nxt[1],'(' + str(round(diff,1)) + ')']
+				largePause = ['*PAU',curr[2],nxt[1],pause(diff,closure)]
 				newList.extend([curr,largePause]) ; continue
 			newList.append(curr)
 		newList.append(jsonListCombined[-1])
 		for dic in item: dic['jsonListCombined'] = newList
 	return infoList
+
 
 
 # Function that combines successive turns of the same speaker.
@@ -448,7 +473,10 @@ def gaps(infoList):
 			nxt = jsonListCombined[count+1]
 			diff = round(nxt[1] - curr[2],2)
 			if diff >= CHATVals['gap']:
-				gap = ['*GAP',curr[2],nxt[1],'(' + str(round(diff,1)) + ')']
+				if CHATVals['beatsMode']:
+					gap = ['*GAP',curr[2],nxt[1],beatsTiming(diff,item[0]['syllPerSec'])]
+				else:
+					gap = ['*GAP',curr[2],nxt[1],absoluteTiming(diff,CHATVals['upperBoundMicropause'])]
 				newList.extend([curr,gap]);
 			else:newList.append(curr)
 		newList.append(jsonListCombined[-1])
@@ -494,6 +522,11 @@ def buildCHAT(infoList):
 		if len(item) == 1: names = ([item[0]['names'][0],item[0]['names'][1]])
 		elif len(item) == 2: names = ([item[0]['names'][0],item[1]['names'][0]])
 		speakerID = [names[0][0:3].upper(),names[1][0:3].upper()]
+		if item[0]['audioFile'][:item[0]['audioFile'].find('.')].find('/') == -1:
+			audioName = item[0]['audioFile'][:item[0]['audioFile'].find('.')]
+		else:
+			name = item[0]['audioFile'][:item[0]['audioFile'].find('.')]
+			audioName = name[name.find('/')+1:]
 		headers = [
 			"@Begin\n@Languages:\t{0}\n".format(CHATheaders['language']),
 			"@Participants:\t{0} {1} {2}, {3} {4} {5}\n".format(
@@ -504,18 +537,27 @@ def buildCHAT(infoList):
 				CHATheaders['speaker1Gender'],CHATheaders['speaker1Role'],speakerID[0]),
 			"@ID:\t{0}|{1}|{4}||{2}|||{3}|||\n".format(CHATheaders['language'],CHATheaders['corpusName'],
 				CHATheaders['speaker2Gender'],CHATheaders['speaker2Role'],speakerID[1]),
-			"@Media:\t{0},audio\n".format(item[0]['audioFile'][:item[0]['audioFile'].find('.')]),
-			"@Transcriber:\tGailbot 3.0\n",		
+			"@Media:\t{0},audio\n".format(audioName),
+			"@Transcriber:\tGailbot 0.3.0\n",		
 			"@Location:\t{0}\n".format(CHATheaders['corpusLocation']),
 			"@Room Layout:\t{0}\n".format(CHATheaders['roomLayout']),
 			"@Situation:\t{0}\n@New Episode\n".format(CHATheaders['situation'])
 		]
 		# Writing CHAT file.
-		CHATfilename = item[0]['outputDir']+'/'+ item[0]['outputDir']+ '-' +CHATname
+		if item[0]['outputDir'].find('/') == -1:
+			CHATfilename = item[0]['outputDir']+'/'+ item[0]['outputDir']+ '-' +CHATname
+		else:
+			name = item[0]['outputDir'][item[0]['outputDir'].find('/')+1:]
+			CHATfilename = item[0]['outputDir']+'/'+ name+ '-' +CHATname
 		if os.path.isfile(CHATfilename): os.remove(CHATfilename)
-		with io.open(CHATfilename,"w",encoding = 'utf-8') as outfile:
-			for s in headers: outfile.write(s)
-			for elem in item[0]['CHATList']:outfile.write(elem)
+		try: 
+			with io.open(CHATfilename,"w",encoding = 'utf-8') as outfile:
+				for s in headers: outfile.write(s)
+				for elem in item[0]['CHATList']:outfile.write(elem)
+		except FileNotFoundError:
+			print(colored("\nCHAT file generation FAILED",'red'))
+			print("Directory or file not found\n")
+			return []
 		# Adding CHAT filename to item list.
 		for elem in item:elem['CHATfilename'] = CHATfilename
 	return infoList
@@ -532,16 +574,14 @@ def buildCA(infoList):
 		devnull = open(os.devnull, 'w')
 		# Creating CA file 
 		cmd_CA = shellCommands['CHAT2CA'].format(CHATfilename)
-		try: subprocess.check_call(cmd_CA,shell=True,stdout=devnull,stderr=devnull)
+		try: subprocess.check_call(cmd_CA,shell=True,stderr=devnull,stdout=devnull)
 		except subprocess.CalledProcessError: 
 			print(colored("\nCHAT to CAlite conversion: FAILED",'red'))
 			print("Missing executable: jeffersonize\n")
 		# Indenting the CA file
 		cmd_indent = shellCommands['indentCA'].format(CAfilename)
-		try: subprocess.check_call(cmd_indent,shell=True,stdout=devnull,stderr=devnull)
-		except subprocess.CalledProcessError: 
-			print(colored("\nCA file indentation: FAILED",'red'))
-			print("Missing executable: indent\n")
+		val = indent(item[0]['outputDir'],CAfilename[CAfilename.rfind('/')+1:])
+		if not val: return []
 		# Renaming the files
 		try:
 			os.remove(CAfilename)
@@ -558,7 +598,11 @@ def writeCSVs(infoList):
 		currItem = item[0]
 		csvName = currItem['CHATfilename'][:currItem['CHATfilename'].find('.')]+'.csv'
 		currItem['jsonListCombined'].insert(0,CSVfields)
-		writer = csv.writer(open(csvName, 'w'))
+		try: writer = csv.writer(open(csvName, 'w'))
+		except FileNotFoundError:
+			print(colored("\nCHAT file generation FAILED",'red'))
+			print("Directory or file not found\n")
+			return False
 		writer.writerows(currItem['jsonListCombined'])
 	return infoList
 
@@ -661,12 +705,45 @@ def overlapPositions(curr,nxt):
 # Lambda function to calculate the pverlap positions
 overlapPos =lambda diff,Len,transLen : int(round((((abs(diff)/Len))*transLen)))
 
+# Function that copies the indent script to the generated folder and runs it
+# Used because Talkbank's indent script does NOT work for subdirectories.
+# Returns None if exe is not found.
+def indent(outputDir,CAfilename):
+	shutil.copy('indent',outputDir)
+	cmd_indent = shellCommands['indentCA'].format(CAfilename)
+	devnull = open(os.devnull, 'w')
+	try: 
+		subprocess.check_call(cmd_indent,shell=True,cwd=outputDir,stderr=devnull,
+			stdout=devnull) ; os.remove(outputDir+'/indent')
+	except subprocess.CalledProcessError: 
+		print(colored("\nCA file indentation: FAILED",'red'))
+		print("Missing executable: indent\n")
+		os.remove(outputDir+'/indent')
+		return False
+	return True
 
 
+# Function used to calculate the syllable rate per second for a combined conversation.
+# Input: Combined conversation jsonList
+# Returns: Syllable rate per second.
+def calcSyllPerSec(jsonListCombined):
+	dictionaryList = rateAnalysis.findSyllables(jsonListCombined)
+	statsDic = rateAnalysis.stats(dictionaryList)
+	syllPerSec = float(1/statsDic['median'])
+	return syllPerSec
 
 
+# Function that returns pauses / gaps in beats timing format
+def beatsTiming(diff,syllPerSec):
+	beats = (float(diff/syllPerSec))
+	#return ' ( ' + ('.'*beats) +' ) '
+	return ' (' +str(round(beats,1)) + 'b) '
+	
 
-
+# Function that returns pauses / gaps in absolute timing format
+def absoluteTiming(diff,upperBoundMicropause):
+	if diff <= upperBoundMicropause: return ' (.) '
+	return ' (' + str(round(diff,1)) + 's) '
 
 
 

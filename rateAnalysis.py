@@ -14,7 +14,7 @@
 
 import os, sys
 #import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
-#import librosa.display 							# Library to display signal.
+#import librosa.display 						# Library to display signal.
 import numpy 									# Library to have multi-dimensional homogenous arrays.
 from big_phoney import BigPhoney				# Finds the syllables per word.
 from statsmodels import robust 					# Statistics library.
@@ -24,8 +24,7 @@ import copy 									# Copying module.
 import logging
 from termcolor import colored
 
-# Gailbot scripts
-from CHAT import constructTurn 					# Function to construct individual speaker turns.
+
 
 tf.get_logger().setLevel(logging.ERROR) 		# Turning off tensorflow debugging messages.
 
@@ -37,14 +36,16 @@ LimitDeviations = 2
 
 # Unicode for the delimiters used.
 delims = {
-	"slowSpeech" :  u'\u25BC',
-	"fastSpeech" :  u'\u25B2'
+	"slowSpeech" :  u'\u2207',
+	"fastSpeech" :  u'\u2206'
 }
 
 # *** Definitions for speech rate analysis functions ***
 
 # Main driver function
 def analyzeSyllableRate(infoList):
+	# IMporting the construct turn function here to avoid circular dependancies.
+	from CHAT import constructTurn
 	# Copying original list so it is not modified.
 	infoListCopy = copy.deepcopy(infoList)
 	# Removing hesitation markers from list
@@ -162,18 +163,6 @@ def visualize(dictionaryList):
 
 
 '''
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

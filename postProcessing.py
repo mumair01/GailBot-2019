@@ -25,6 +25,7 @@ import CHAT										# Script to produce CHAT files.
 import rateAnalysis  							# Script to analyze speech rate.
 import laughAnalysis 							# Script to analyze laughter.
 import soundAnalysis 							# Script to analyze different sound characterists.
+import numpy 									# Library to have multi-dimensional homogenous arrays.
 
 
 
@@ -114,7 +115,7 @@ def inquire(modules):
 # Input: Tuple/List containing information.
 def postProcess(infoList):
 	processWrapper(infoList)
-	
+
 # *** Definitions for functions used in the postProcessing actions ***
 
 # Function that converts a Gailbot json file to CSV.
@@ -129,10 +130,10 @@ def jsonToCSV(infoList):
 		writer = csv.writer(open(filename, 'w'))
 		writer.writerows(jsonList)
 		# Updating dictionary
-		infoDic['csv'] = filename                   # Adding individual csv filename.
+		infoDic['csv'] = filename                   # Adding exit csv filename.
 		infoDic['jsonList'] = jsonList				# Adding transcribed data to dictionary 
 	# Removing file from list if it is not found.
-	infoList=[infoDic for infoDic in infoList if len(infoDic['jsonList']) > 1]				
+	infoList=[infoDic for infoDic in infoList if len(infoDic['jsonList']) > 1]		
 	return infoList
 
 
@@ -141,7 +142,12 @@ def jsonToCSV(infoList):
 # Wrapper function that calls all processing functions
 # Input : List passed to main/postProcess
 def processWrapper(infoList):
-	for action in processingActions: infoList = action(infoList)
+	for action in processingActions: 
+		# Ending if no files to process.
+		if len(infoList) == 0: 
+			print(colored("Post-processing not applied\nNo data to process\n",'red'))
+			return
+		else: infoList = action(infoList)
 
 # Function that assigns speaker names based on the number of speakers
 # Input: Transcribed word List + additional metrics from getJSON
@@ -163,7 +169,7 @@ def getJSON(infoDic):
 	try:
 		with open(infoDic['jsonFile']) as f: jsonObject = json.load(f)
 	except FileNotFoundError:
-		print(colored("ERROR: File not found: {}".format(infoDic['jsonFile']),'red'))
+		print(colored("\nERROR: File not found: {}".format(infoDic['jsonFile']),'red'))
 		return []
 	for res in jsonObject:
 		if "speaker_labels" not in res:
@@ -188,6 +194,10 @@ def getJSON(infoDic):
 			for label in speakerLabels: labels.update({label['from']:label['speaker']})
 	# Adding speaker labels to output list
 	for listElem,label in zip(jsonList,labels): listElem.insert(0,labels[label])
+	# Adding label if no speaker labels were returned.
+	if len(labels) == 0: 
+		labels = numpy.resize([0,1],len(jsonList))
+		for elem,label in zip(jsonList,labels):elem.insert(0,label)
 	# Changing labels to provided names
 	jsonList = assignSpeakers(jsonList,infoDic['names'])
 	return jsonList
@@ -196,6 +206,9 @@ def getJSON(infoDic):
 processingActions = [jsonToCSV,rateAnalysis.analyzeSyllableRate,
 		laughAnalysis.analyzeLaugh,soundAnalysis.analyzeSound,
 		CHAT.formatCHAT]
+
+# List of functions to implement
+#processingActions = [jsonToCSV,soundAnalysis.analyzeSound,CHAT.formatCHAT]
 
 # Function that creates the processingActions list
 def createActionList(moduleList):
@@ -232,6 +245,11 @@ if __name__ == '__main__':
 			"audioFile" : "sample1.mp3",
 			"names" : ["SP1","SP2"],
 			"individualAudioFile" : "sample1/sample1.mp3"}
+	dic4 = {"outputDir" : "pizza",
+			"jsonFile" : "pizza/pizza-json.txt",
+			"audioFile" : "pizza.mp3",
+			"names" : ["SP1","SP2"],
+			"individualAudioFile" : "pizza/pizza.mp3"}
 
 	sampleInfo = [dic3]
 	postProcess(sampleInfo)

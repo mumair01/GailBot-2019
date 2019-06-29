@@ -35,6 +35,7 @@ import subprocess
 import queue as Queue 
 import tempfile									# Directory library
 import shutil									# Directory library
+import glob 									# Directory library
 
 # Gailbot scripts
 import STT 										# Script that sends transcription requests
@@ -150,8 +151,9 @@ def exec_menu(choice,function_list,username,password,closure):
     choice = choice.lower()
     if choice == '': return
     else:
-        try: function_list[choice](username,password,closure)
-        except KeyError: print("Invalid selection, please try again.\n")
+    	function_list[choice](username,password,closure)
+        #try: function_list[choice](username,password,closure)
+        #except KeyError: print("Invalid selection, please try again.\n")
     return
 
 # Main menu function
@@ -225,7 +227,7 @@ def request_menu(username,password,closure):
 		for k,v in watsonVals['output-directory'].items(): 
 			x.add_row([k,v,watsonVals['contentType'][k],str(watsonVals['names'][k])])
 		print(x)
-		print("\n1. Change custom language model")
+		print("\n1. Change base / custom language model")
 		print("2. Change custom acoustic model")
 		print("3. Change X-Watson-Learning status")
 		print("4. Change authentication type")
@@ -252,7 +254,7 @@ def transcribe_new(username,password,closure):
 		print("\nERROR: File does not exist")
 		return
 	# Verifying content Type and extracting opus file if needed.
-	watsonVals['files'],pairDic = convertOpus(watsonVals['files'],deleteQueue,pairDic)
+	watsonVals['files'],pairDic = convertpus(watsonVals['files'],deleteQueue,pairDic)
 	setOutputDir(watsonVals['files'],watsonVals['files'][0][:watsonVals['files'][0].rfind('.')])	
 	watsonVals['contentType'] = setContentType(audioFormatMapping,watsonVals['files'])
 	# Setting speaker names
@@ -275,7 +277,6 @@ def transcribe_recorded(username,password,closure):
 
 	# Setting post-processing variables.
 	#if not CHAT.main_menu({}): return
-
 	if not request_menu(username,password,closure): return 
 	sendRequest(username,password,closure)
 
@@ -452,25 +453,30 @@ def getAudioFileList(getVal=True):
 	videoTable.title = colored("Supported video formats",'red')
 	audioTable.field_names = [colored('Audio Format','blue'),colored('Extension','blue')]
 	videoTable.field_names = [colored('Video Format','blue'),colored('Extension','blue'),
-		colored("Audio channels",'blue')]
+		colored("Required audio channels",'blue')]
 	for k,v in audioFormatMapping.items():  audioTable.add_row([k,v])
 	for k,v in videoFormats.items(): videoTable.add_row([k,v,videoFormatChannels[v]])
 	print(audioTable)
 	print(videoTable)
 	print('\n')
 	while True:
-		print("Enter audio/video file name(s) (space delimited)")
+		print("Enter audio/video file name(s)-"+ colored(" Space delimited",'red'))
 		print("NOTE: Use " + colored("'-pair [file-1] [file-2]'",'red'),
 			"to input an audio file pair part of a single conversation")
+		print("NOTE: Use " + colored("'-dir [directory name]'",'red'),
+			"to input all files in a directory. " +
+			colored("Sub-directories not included",'red'))
 		print("Press 0 to go back to options\n")
 		localDic = {}
 		if get_val(localDic,'files',list)==None: return
+		# Extracting all files from a directory and removing -directory flag
+		localDic['files'] = setDirectoryFiles(localDic['files'])
+		if len(localDic['files']) == 0: print("\nERROR: File does not exist") ; continue
 		# Extracting pairs from the input list and removing -pair keyword
 		localDic['files'],pairDic = setFilePairs(localDic['files'])
 		# Ensuring files exist
 		if any(file for file in localDic['files'] if not os.path.isfile(file)):
-			print("\nERROR: File does not exist")
-			continue
+			print("\nERROR: File does not exist") ; continue
 		# Verifying file formats.
 		if not verifyFormat(videoFormats,audioFormatMapping,localDic['files']): continue
 		# Extracting audio from video inputs.
@@ -522,20 +528,31 @@ def sendRequest(username,password,closure):
 	# Setting request variables.
 	if watsonVals['token-type'] == 'Access' : token = 0
 	elif watsonVals['token-type'] == 'Watson' : token = 1
+	print
 	# Command to run the Speeach to Text core module.
 	outputInfo = STT.run(username=watsonVals['username'],password = watsonVals['password'],
 		base_model= watsonVals['base-model'],acoustic_id = watsonVals['acoustic-id'],
-		language_id=watsonVals['custom-id'],watson_token=watsonVals['token-type'],
+		language_id=watsonVals['custom-id'],watson_token=token,
 		audio_files=watsonVals['files'],names=watsonVals['names'],combined_audio = '',
 		contentType=watsonVals['contentType'],num_threads = len(watsonVals['files']),
 		customization_weight = watsonVals['customizationWeight'],
 		out_dir=watsonVals['output-directory'],opt_out = watsonVals['opt-out'])
+	# Removing unprocessed files.
+	for dic in outputInfo:
+		if dic['delete'] : 
+			try: shutil.rmtree(dic['outputDir'])
+			except: pass 
+	outputInfo = [dic for dic in outputInfo if not dic['delete']]
 	# Adding combined audio information to output.
 	for dic in outputInfo:
 		# Copying original audiofiles to output directory
 		copyFile(dic['audioFile'],dic['outputDir']+'/')
 		# Adding individual file path and name
-		dic['individualAudioFile'] =dic['outputDir']+'/'+ dic['audioFile']
+		if dic['audioFile'].find('/') == -1:
+			dic['individualAudioFile'] =dic['outputDir']+'/'+ dic['audioFile']
+		else:
+			names = dic['audioFile'][dic['audioFile'].rfind('/')+1:]
+			dic['individualAudioFile'] =dic['outputDir']+'/'+ names
 		if dic['audioFile'] in watsonVals['combinedAudio'].keys():
 			dic['audioFile'] = watsonVals['combinedAudio'][dic['audioFile']]
 		# Copying audiofiles to output directory
@@ -637,13 +654,31 @@ def setFilePairs(fileList):
 			newList.append(file)
 			if len(newList) == 2:
 				pairDic['files'].append(newList)
-				ext = False ; newList = []
-				continue
+				ext = False ; newList = [] ; continue
 		if file == '-pair': ext = True
 	for count,listElem in enumerate(pairDic['files']):
 		setOutputDir(listElem,'pair-{}'.format(count))
 	fileList = [val for val in fileList if val != '-pair']
 	return fileList,pairDic
+
+# Extracts all the files from a given directory and sets as files to be transcribed.
+# Input: List of files to be transcribed.
+# Returns an empty list of any of the files does not exist
+def setDirectoryFiles(fileList):
+	newList = [] ; ext = False
+	for file in fileList:
+		if ext:
+			files = [file+'/'+f for f in os.listdir(file) if os.path.isfile(os.path.join(file, f))]
+			newList.extend(files) ; ext = False
+		elif file == '-dir': ext = True
+		else: 
+			if not os.path.isfile(file) and file != '-pair':
+				print("\nERROR: File does not exist") ; return []
+			newList.append(file)
+	# Ensuring files are supported.
+	newList = [file for file in newList if file[file.rfind('.')+1:] in videoFormats.values()
+			or  file[file.rfind('.')+1:] in audioFormatMapping.values()or file == '-pair']
+	return newList
 
 # Function that sets speaker names for each file.
 # Pair files have two different speakers per file.
@@ -672,8 +707,9 @@ def overlay(pairList,outDirDic):
 # Function that copies a file from one directory to another.
 def copyFile(currentPath,newDirPath):
 	try:shutil.copy(currentPath,newDirPath)
-	except (shutil.Error,FileNotFoundError):pass
-	pass
+	except (shutil.Error,FileNotFoundError): pass
+
+
 
 if __name__ == '__main__':
 
