@@ -44,7 +44,7 @@ delims = {
 
 # Main driver function
 def analyzeSyllableRate(infoList):
-	# IMporting the construct turn function here to avoid circular dependancies.
+	# Importing the construct turn function here to avoid circular dependancies.
 	from CHAT import constructTurn
 	# Copying original list so it is not modified.
 	infoListCopy = copy.deepcopy(infoList)
@@ -63,7 +63,7 @@ def analyzeSyllableRate(infoList):
 		# Adds delims to individual word jsonList.
 		dic['jsonList'] = addDelims(dictionaryList,statsDic,dic['jsonList'])
 		# Visuzlizing the data.
-		#visualize(dictionaryList)
+		#  ** visualize(dictionaryList)
 	for dicCopy,dic in zip(infoListCopy,infoList):
 		# Adding Hesitation markers back.
 		dic['jsonList'] = addHesitation(dicCopy,dic)
@@ -104,10 +104,16 @@ def stats(dictionaryList):
 
 # Function that adds fast / slow speech delimiters to the transcript
 def addDelims(dictionaryList,statsDic,jsonList):
+	vowels = ['a','e','i','o','u']
 	jsonListTurns = [] ; words = [] ; fastCount = 0 ; slowCount = 0
 	for elem in dictionaryList:
-		if elem['syllRate'] <= statsDic['lowerLimit']: 
-			elem['elem'][3] = delims['slowSpeech'] + elem['elem'][3] + delims['slowSpeech']
+		if elem['syllRate'] <= statsDic['lowerLimit']:
+			# For one word, adding colons to trailing vowel.
+			if len(elem['elem'][3].split())==1 and any(char in vowels for char in elem['elem'][3]):
+				pos = lastVowelPos(elem['elem'][3])
+				elem['elem'][3] = elem['elem'][3][:pos+1] + '::' + elem['elem'][3][pos+1:]
+			else:
+				elem['elem'][3] = delims['slowSpeech'] + elem['elem'][3] + delims['slowSpeech']
 			slowCount+=1
 		elif elem['syllRate'] >= statsDic['upperLimit']: 
 			elem['elem'][3] = delims['fastSpeech'] + elem['elem'][3] + delims['fastSpeech']
@@ -136,6 +142,15 @@ def addHesitation(dicCopy,dic):
 		if elem[3] == "%HESITATION":jsonList.append(elem)
 	jsonList[1:] = sorted(jsonList[1:], key = operator.itemgetter(1))
 	return jsonList
+
+# Function that finds the last vowel in a string
+def lastVowelPos(string):
+	vowelList = []
+	vowels = set("aeiouAEIOU")
+	for pos, char in enumerate(string):
+	    if char in vowels:
+	    	vowelList.append(pos)
+	return vowelList[-1]
 
 '''
 

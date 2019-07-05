@@ -19,13 +19,15 @@ from termcolor import colored					# Text coloring library
 import itertools								# Iterates over lists
 import inquirer 								# Selection interface library.
 from prettytable import PrettyTable				# Table printing library
+import copy 		
+import numpy 									# Library to have multi-dimensional homogenous arrays.							# Copying module.
 
 # Gailbot scripts
 import CHAT										# Script to produce CHAT files.
 import rateAnalysis  							# Script to analyze speech rate.
 import laughAnalysis 							# Script to analyze laughter.
 import soundAnalysis 							# Script to analyze different sound characterists.
-import numpy 									# Library to have multi-dimensional homogenous arrays.
+
 
 
 
@@ -63,7 +65,6 @@ menuMapping = {
 # List containing separate CSV headings.
 CSVfields = ['Speaker Label','Start Time','End Time','Transcript','Confidence',
 			'Periodic','Recieved Audio', 'Result Index']
-
 
 # *** Menu function definitions ***
 
@@ -146,6 +147,7 @@ def processWrapper(infoList):
 		# Ending if no files to process.
 		if len(infoList) == 0: 
 			print(colored("Post-processing not applied\nNo data to process\n",'red'))
+			input("\nPress any key to continue...")
 			return
 		else: infoList = action(infoList)
 
@@ -202,7 +204,7 @@ def getJSON(infoDic):
 	jsonList = assignSpeakers(jsonList,infoDic['names'])
 	return jsonList
 
-# List of functions to implement
+#  *** List of functions to implement ***
 processingActions = [jsonToCSV,rateAnalysis.analyzeSyllableRate,
 		laughAnalysis.analyzeLaugh,soundAnalysis.analyzeSound,
 		CHAT.formatCHAT]
@@ -227,7 +229,173 @@ def applyLocalMenu():
 	return True
 
 
+# *** Local menu functions ***
+
+
+# Global list of files to be processed.
+infoList = []
+# Copy of the defualt dictionary.
+infoListOriginal = infoList.copy()
+
+# Executes the appropriate function based on user input.
+def exec_menu(choice,function_list):
+    os.system('clear')
+    choice = choice.lower()
+    if choice == '': return
+    else:
+        try: function_list[choice]()
+        except KeyError: print("Invalid selection, please try again.\n")
+    return
+
+# Function that runs the entire post-processing module as a separate entity.
+def runLocal(username,password,closure):
+	if not local_menu(): return False
+	main_menu()
+	os.system('clear')
+	postProcess(infoList)
+	print(colored("\nPost-processing completed\n",'green'))
+	input(colored("Press any key to continue...",'red'))
+	infoList.clear()
+
+
+# Main menu function
+def local_menu():
+	while True:
+		os.system('clear')
+		print("Welcome to Gailbot's " + colored('Post-processing','red') + " interface!\n")
+		x = PrettyTable()
+		x.title = colored("Post-processing request",'red')
+		x.field_names = [colored("Out-Directory",'blue'),colored("jsonFile",'blue'),
+			colored("Combined Audio",'blue'),colored("Names",'blue'),colored("Individual Audio",'blue')]
+		for infoDic in infoList:
+			x.add_row([infoDic['outputDir'],infoDic['jsonFile'][infoDic['jsonFile'].rfind('/')+1:],
+				infoDic['audioFile'][infoDic['audioFile'].rfind('/')+1:],
+				infoDic['names'],
+				infoDic['individualAudioFile'][infoDic['individualAudioFile'].rfind('/')+1:]])
+		print(x)
+		print(colored("\nNOTE: This module is meant to be applied to Gailbot outputs"
+			" **exactly** as outputted\n",'red'))
+		print(colored("NOTE: For pair files, input the information for both files separately",'red'))
+		print('\nUse options 1 through 4 to configure the post-processing menu:\n')
+		print("1. Add files to process")
+		print(colored("2. Proceed",'green'))
+		print(colored("3. Return to main menu\n",'red'))
+		choice = input(" >>  ")
+		if choice == '2': return True
+		if choice == '3' :
+			infoList.clear() ; return False
+		exec_menu(choice,local_actions)
+
+
+# Function that obtains post-processing specific information
+# Returns: List of dictionaries that can be given to postProcess.
+def postInput():
+	localDic = {}
+	if not getOutDir(localDic,"outputDir"): return None
+	# Getting a list of all files in the specific directory.
+	dirFiles = fileList(localDic["outputDir"]) ; dirFiles.append("Return")
+	# Getting all remaining inputs
+	if not getJsonFile(localDic,"jsonFile",dirFiles): return None
+	print("Enter " +colored("combined",'red')+ " audio file\nSelect 'Return' to go back to options\n")
+	print(colored("EXAMPLE: pair-0/test2a-test2b-combined.wav\n",'blue'))
+	if not getAudio(localDic,"audioFile",dirFiles): return None
+	if not getNames(localDic,"names"): return None
+	os.system('clear')
+	print("Enter " +colored("individual",'red')+ " audio file\nPress 'Return' to go back to options\n")
+	print(colored("EXAMPLE: pair-0/test2a.wav\n",'blue'))
+	if not getAudio(localDic,"individualAudioFile",dirFiles): return None
+	infoList.append(localDic)
+
+
+# Actions for the main menu
+local_actions = {
+	'1' : postInput,
+	'2' : main_menu,
+}
+
+# *** Helper functions for the local menu ***
+
+# Helper Function that gets an input
+def get_val(dic,key,type):
+	while True:
+		try:
+			if type == list: 
+				choice = input(" >> ").split()
+				if len(choice) == 0:continue
+				if choice[0] == str(0): return None
+				dic[key] = choice
+				return True
+			else: 
+				choice = type(input(" >> "))
+				if len(str(choice)) == 0:continue
+				if choice == type(0): return None
+				else: 
+					dic[key] = choice
+					return True
+		except ValueError: print("Error: Value must be of type: {}".format(type))
+	
+
+def getOutDir(dic,key):
+	os.system('clear')
+	print("Enter output directory\nPress 0 to go back to options\n")
+	print(colored("NOTE: All inputs must be as outputted by Gailbot 0.3.0\n",'red'))
+	print(colored("EXAMPLE: sample1\n",'blue'))
+	while True:
+		if get_val(dic,key,str) == None: return False
+		if not os.path.isdir(dic[key]):
+			print(colored("\nERROR: Invalid Directory. Try again\nPress 0 to go back to options\n",'red'))
+		else: os.system('clear') ; return True
+
+def getJsonFile(dic,key,dirList):
+	os.system('clear')
+	print("Enter JSON data file\nSelect 'Return' to go back to options\n")
+	print(colored("NOTE: All inputs must be as outputted by Gailbot 0.3.0\n",'red'))
+	print(colored("EXAMPLE: sample1/sample1-json.txt\n",'blue'))
+	while True:
+		jsonFile = generalInquiry(dirList)
+		if jsonFile == 'Return': return False
+		else: dic[key] = dic['outputDir'] + '/' + jsonFile
+		if not os.path.isfile(dic[key]) or not os.path.splitext(dic[key])[1] == ".txt":
+			print(colored("\nERROR: Invalid file. Try again\nSelect 'Return' to go back to options\n",'red'))
+		else: os.system('clear') ; return True
+
+def getNames(dic,key):
+	os.system('clear')
+	print("Enter speaker names (space delimited)\nSelect 'Return' to go back to options\n")
+	print(colored("EXAMPLES:\nOne speaker: SP1\nTwo Speakers: SP1 SP2\n",'blue'))
+	return get_val(dic,key,list)
+
+def getAudio(dic,key,dirList):
+	print(colored("NOTE: All inputs must be as outputted by Gailbot 0.3.0\n ",'red'))
+	while True:
+		audioFile = generalInquiry(dirList)
+		if audioFile =='Return': return False
+		else: dic[key] = dic['outputDir'] + '/' + audioFile
+		if not os.path.isfile(dic[key]):
+			print(colored("\nERROR: Invalid file. Try again\nSelect 'Return' to go back to options\n",'red'))
+		else: os.system('clear') ; return True
+
+
+# Function that returns a list of all files in a directory
+# Input: File directory
+# Output: List of all files in the directory.
+def fileList(dir):
+	return [file for file in os.listdir(dir) if file[0] != '.']
+
+# General inquiry meny funtion for 
+def generalInquiry(choiceList):
+	options = [
+			inquirer.List('inputVal',
+				message="Post-processing modules",
+				choices=choiceList,
+				),
+		]
+	print(colored("Proceed --> Enter / Return key\n",'green'))
+	return inquirer.prompt(options)['inputVal']
+
 if __name__ == '__main__':
+
+	#runLocal('a','b',{})
 
 
 	dic = {"outputDir" : "pair-0",
@@ -251,7 +419,7 @@ if __name__ == '__main__':
 			"names" : ["SP1","SP2"],
 			"individualAudioFile" : "pizza/pizza.mp3"}
 
-	sampleInfo = [dic3]
+	sampleInfo = [dic4]
 	postProcess(sampleInfo)
 
 

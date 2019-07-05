@@ -151,9 +151,8 @@ def exec_menu(choice,function_list,username,password,closure):
     choice = choice.lower()
     if choice == '': return
     else:
-    	function_list[choice](username,password,closure)
-        #try: function_list[choice](username,password,closure)
-        #except KeyError: print("Invalid selection, please try again.\n")
+        try: function_list[choice](username,password,closure)
+        except KeyError: print("Invalid selection, please try again.\n")
     return
 
 # Main menu function
@@ -166,11 +165,12 @@ def main_menu(username,password,closure):
 			+'\nGailbot is an automated transcription system '
 			'that specializes in transcribing in the Conversation Analysis (CA)'
 			' format\n')
-		print("Use options 1 through 3 to configure and use Gailbot\n")
-		print("Please choose one of the following options:")
+		print("Use options 1 through 4 to configure and use Gailbot\n")
+		print("Please choose one of the following options:\n")
 		print("1. Transcribe existing conversation(s)")
 		print("2. Record and transcribe a conversation")
-		print(colored("3. Quit\n",'red'))
+		print("3. Apply post-processing on existing Gailbot data")
+		print(colored("4. Quit\n",'red'))
 		choice = input(" >>  ")
 		exec_menu(choice,menu_actions,username,password,closure)
 
@@ -209,10 +209,12 @@ def request_menu(username,password,closure):
 		watsonVals['password'] = password
 		os.system('clear')
 		y = PrettyTable()
+		y.title = colored("Pre-request Menu",'red')
 		y.field_names = [colored("Request variable",'blue'),colored("Value",'blue')]
 		y.add_row(["IBM Bluemix Username",watsonVals['username']])
 		y.add_row(["IBM Bluemix password",watsonVals['password']])
 		y.add_row(["Base language model",watsonVals['base-model']])
+		y.add_row(["Base acoustic model",acoustic_model.output['base-model']])
 		y.add_row(["Custom acoustic model ID",watsonVals['acoustic-id']])
 		y.add_row(["Custom language model ID",watsonVals['custom-id']])
 		y.add_row(["X-Watson-Learning opt out",watsonVals['opt-out']])
@@ -227,6 +229,8 @@ def request_menu(username,password,closure):
 		for k,v in watsonVals['output-directory'].items(): 
 			x.add_row([k,v,watsonVals['contentType'][k],str(watsonVals['names'][k])])
 		print(x)
+		if watsonVals['base-model'] != acoustic_model.output['base-model']:
+			print(colored("\nWARNING: Ensure acoustic and language base model consistency",'red'))
 		print("\n1. Change base / custom language model")
 		print("2. Change custom acoustic model")
 		print("3. Change X-Watson-Learning status")
@@ -254,7 +258,7 @@ def transcribe_new(username,password,closure):
 		print("\nERROR: File does not exist")
 		return
 	# Verifying content Type and extracting opus file if needed.
-	watsonVals['files'],pairDic = convertpus(watsonVals['files'],deleteQueue,pairDic)
+	watsonVals['files'],pairDic = convertOpus(watsonVals['files'],deleteQueue,pairDic)
 	setOutputDir(watsonVals['files'],watsonVals['files'][0][:watsonVals['files'][0].rfind('.')])	
 	watsonVals['contentType'] = setContentType(audioFormatMapping,watsonVals['files'])
 	# Setting speaker names
@@ -263,7 +267,10 @@ def transcribe_new(username,password,closure):
 	# Selecting post-processing modules to be implemented
 	if not postProcessing.main_menu(): return
 
+	# Ensure base model consistency
 	if not request_menu(username,password,closure): return
+	while not checkBaseModels(acoustic_model.output["base-model"],language_model.output["base-model"]):
+		if not request_menu(username,password,closure): return
 	# Sending request.
 	sendRequest(username,password,closure)
 	
@@ -275,9 +282,10 @@ def transcribe_recorded(username,password,closure):
 	# Selecting post-processing modules to be implemented
 	if not postProcessing.main_menu(): return
 
-	# Setting post-processing variables.
-	#if not CHAT.main_menu({}): return
+	# Ensure base model consistency
 	if not request_menu(username,password,closure): return 
+	while not checkBaseModels(acoustic_model.output["base-model"],language_model.output["base-model"]):
+		if not request_menu(username,password,closure): return 
 	sendRequest(username,password,closure)
 
 # Exit program
@@ -289,7 +297,8 @@ menu_actions = {
     'main_menu': main_menu,
     '1' : transcribe_recorded,
     '2' : transcribe_new,
-    '3' : exit
+    '3' : postProcessing.runLocal,
+    '4' : exit
 }
 
 # *** Definitions for functions used in the recording menu ***
@@ -708,6 +717,20 @@ def overlay(pairList,outDirDic):
 def copyFile(currentPath,newDirPath):
 	try:shutil.copy(currentPath,newDirPath)
 	except (shutil.Error,FileNotFoundError): pass
+
+# Function that verifies whether the acoustic and custom base models are complementary
+# Returns True if base models are the same
+# Returns false otherwise
+def checkBaseModels(acousticBase,languageBase):
+	if acousticBase == None or languageBase == None: return True
+	if str(acousticBase) == str(languageBase): return True
+	else:
+		os.system('clear')
+		print(colored("\nERROR: Ensure acoustic model and language model have the same base model",'red'))
+		print(colored("\nCurrent acostic base model: {}".format(acousticBase),'blue'))
+		print(colored("\nCurrent language base model: {}".format(languageBase),'blue'))
+		input(colored("\nPress any key to return to pre-request menu...",'red'))
+		return False
 
 
 

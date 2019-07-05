@@ -25,7 +25,7 @@ import re 										# Regular expression library
 import shutil
 
 # Gailbot scripts
-import rateAnalysis
+import timing 									# Beat / absolute timing transcription module
 
 # *** Global variables / invariants ***
 
@@ -102,7 +102,7 @@ def main_menu(closure):
 	while True:
 		os.system('clear')
 		print("Welcome to Gailbot's " + colored('CHAT generation module','red') + " interface!\n")
-		print("Use options 1 through 4 to configure CHAT variables\n")
+		print("Use options 1 through 4 to configure CHAT variables.\n")
 		print("Please choose one of the following options:")
 		print("1. Modify CHAT file headers")
 		print("2. Modify CHAT file transcription parameters")
@@ -320,7 +320,7 @@ def commentMarkers(infoList):
 	for infoDic in infoList:
 		for elem in infoDic['jsonList'][1:]:
 			if elem[3].find("%HESITATION") != -1:
-				elem[3]=elem[3].replace("%HESITATION","[^ HESITATION ]")
+				elem[3]=elem[3].replace("%HESITATION","uhm")
 	return infoList
 
 
@@ -393,6 +393,7 @@ def overlaps(infoList):
 					or abs(pos['posXnxt'] - pos['posYnxt']) <= markerLimit):
 					newList.append(curr);continue
 				# Not adding markers if there is no character within limit
+				# Not adding markers encompassing comments.
 				if (not re.search('[a-zA-Z]',curr[3][pos['posXcurr']:pos['posYcurr']])
 					or not re.search('[a-zA-Z]',curr[3][pos['posXcurr']:pos['posYcurr']])):
 					newList.append(curr);continue
@@ -412,41 +413,7 @@ def overlaps(infoList):
 # Input: list of lists containing dictionaries.
 # Output : list of lists containing dictionaries.
 def pauses(infoList):
-	for item in infoList:
-		# Setting absolute / beats transcription mode.
-		if CHATVals['beatsMode']: 
-			syllPerSec = calcSyllPerSec(item[0]['jsonListCombined'])
-			pause = beatsTiming ; closure = syllPerSec
-		else: 
-			syllPerSec = None ; pause = absoluteTiming
-			closure = CHATVals['upperBoundMicropause']
-		for dic in item: dic['syllPerSec'] = syllPerSec
-		# Adding pause markers
-		newList = []
-		jsonListCombined = item[0]['jsonListCombined']
-		for count,curr in enumerate(jsonListCombined[:-1]):
-			nxt = jsonListCombined[count+1]
-			# Only add pauses if current and next speaker is the same.
-			if curr[0] != nxt[0]:newList.append(curr);continue
-			diff = round(nxt[1] - curr[2],2)
-			# In this case, the latch marker is added.
-			if diff >= CHATVals['lowerBoundLatch'] and diff <= CHATVals['upperBoundLatch']:
-				curr[3] += ' ' + CHATsymbols['latch'] + ' '
-			# In this case, the normal pause markers are added.
-			elif diff >= CHATVals['lowerBoundPause'] and diff <= CHATVals['upperBoundPause']:
-				curr[3] += pause(diff,closure)
-			# In this case, micropause markers are added.
-			elif diff >= CHATVals['lowerBoundMicropause']and diff <= CHATVals['upperBoundMicropause']:
-				curr[3] += pause(diff,closure)
-			# In this case, very large pause markers are added
-			elif diff > CHATVals['LargePause']:
-				largePause = ['*PAU',curr[2],nxt[1],pause(diff,closure)]
-				newList.extend([curr,largePause]) ; continue
-			newList.append(curr)
-		newList.append(jsonListCombined[-1])
-		for dic in item: dic['jsonListCombined'] = newList
-	return infoList
-
+	return timing.pauses(infoList,CHATVals)
 
 
 # Function that combines successive turns of the same speaker.
@@ -467,21 +434,7 @@ def combineSameSpeakerTurns(infoList):
 # Input: list of lists containing dictionaries.
 # Output : list of lists containing dictionaries.
 def gaps(infoList):
-	for item in infoList:
-		newList = [] ; jsonListCombined = item[0]['jsonListCombined']
-		for count,curr in enumerate(jsonListCombined[:-1]):
-			nxt = jsonListCombined[count+1]
-			diff = round(nxt[1] - curr[2],2)
-			if diff >= CHATVals['gap']:
-				if CHATVals['beatsMode']:
-					gap = ['*GAP',curr[2],nxt[1],beatsTiming(diff,item[0]['syllPerSec'])]
-				else:
-					gap = ['*GAP',curr[2],nxt[1],absoluteTiming(diff,CHATVals['upperBoundMicropause'])]
-				newList.extend([curr,gap]);
-			else:newList.append(curr)
-		newList.append(jsonListCombined[-1])
-		for dic in item: dic['jsonListCombined'] = newList
-	return infoList
+	return timing.gaps(infoList,CHATVals)
 
 # Function that converts the combinedList to CHAT format
 # Input: list of lists containing dictionaries.
@@ -519,14 +472,17 @@ def buildCHAT(infoList):
 	for item in infoList:
 		# Assigning appropriate speaker names and ID's
 		names = []
-		if len(item) == 1: names = ([item[0]['names'][0],item[0]['names'][1]])
-		elif len(item) == 2: names = ([item[0]['names'][0],item[1]['names'][0]])
+		if len(item) == 1: names = ([item[0]['names'][0].upper(),item[0]['names'][1].upper()])
+		elif len(item) == 2: names = ([item[0]['names'][0].upper(),item[1]['names'][0].upper()])
 		speakerID = [names[0][0:3].upper(),names[1][0:3].upper()]
 		if item[0]['audioFile'][:item[0]['audioFile'].find('.')].find('/') == -1:
 			audioName = item[0]['audioFile'][:item[0]['audioFile'].find('.')]
 		else:
 			name = item[0]['audioFile'][:item[0]['audioFile'].find('.')]
 			audioName = name[name.find('/')+1:]
+		# Setting comments
+		if CHATVals['beatsMode']: timingMode = "Beat timing mode: Pauses/Gaps in beats"
+		else: timingMode = "Absolute timing mode: Pauses/Gaps in seconds"
 		headers = [
 			"@Begin\n@Languages:\t{0}\n".format(CHATheaders['language']),
 			"@Participants:\t{0} {1} {2}, {3} {4} {5}\n".format(
@@ -538,6 +494,7 @@ def buildCHAT(infoList):
 			"@ID:\t{0}|{1}|{4}||{2}|||{3}|||\n".format(CHATheaders['language'],CHATheaders['corpusName'],
 				CHATheaders['speaker2Gender'],CHATheaders['speaker2Role'],speakerID[1]),
 			"@Media:\t{0},audio\n".format(audioName),
+			"@Comment:\t{0}\n".format(timingMode),
 			"@Transcriber:\tGailbot 0.3.0\n",		
 			"@Location:\t{0}\n".format(CHATheaders['corpusLocation']),
 			"@Room Layout:\t{0}\n".format(CHATheaders['roomLayout']),
@@ -721,35 +678,6 @@ def indent(outputDir,CAfilename):
 		os.remove(outputDir+'/indent')
 		return False
 	return True
-
-
-# Function used to calculate the syllable rate per second for a combined conversation.
-# Input: Combined conversation jsonList
-# Returns: Syllable rate per second.
-def calcSyllPerSec(jsonListCombined):
-	dictionaryList = rateAnalysis.findSyllables(jsonListCombined)
-	statsDic = rateAnalysis.stats(dictionaryList)
-	syllPerSec = float(1/statsDic['median'])
-	return syllPerSec
-
-
-# Function that returns pauses / gaps in beats timing format
-def beatsTiming(diff,syllPerSec):
-	beats = (float(diff/syllPerSec))
-	#return ' ( ' + ('.'*beats) +' ) '
-	return ' (' +str(round(beats,1)) + 'b) '
-	
-
-# Function that returns pauses / gaps in absolute timing format
-def absoluteTiming(diff,upperBoundMicropause):
-	if diff <= upperBoundMicropause: return ' (.) '
-	return ' (' + str(round(diff,1)) + 's) '
-
-
-
-
-
-
 
 
 
