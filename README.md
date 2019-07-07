@@ -87,11 +87,13 @@ Gailbot has multiple internal menus that offer a complete and clear interface.
 
 ### Pre-request menu
 * Provides the user with multiple details regarding custom language and acoustic models, some IBM features, and details regarding files to be trascribed.
+
 **NOTE: Use the custom language model to select a base model if needed.**
 
 ### Post-processing file selection interface
 * Allows user to add existing Gailbot data and apply post-processing only.
 * For a pair of files corresponding to the same conversation, the user has to manually add both files separately with the desired speaker names.
+
 **NOTE: The interface asks for the combined as well as the individual audio files. These may be the same for a single file and different for a pair of files.**
 
 
@@ -161,6 +163,6 @@ The [HiLab](https://sites.tufts.edu/hilab/people/), including
 
 * [Muhammad Umair](http://sites.tufts.edu/hilab/people)
 * [Saul Albert](http://twitter.com/saul)
-* [Jan P. Deruiter](http://twitter.com/jpderuiter)
 * [Julia Mertens](https://twitter.com/therealjmertens)
+* [Jan P. Deruiter](http://twitter.com/jpderuiter)
 * [Lena Warnke](https://twitter.com/LenaWrnk)
