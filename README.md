@@ -89,7 +89,7 @@ Gailbot has multiple internal menus that offer a complete and clear interface.
 * Provides the user with multiple details regarding custom language and acoustic models, some IBM features, and details regarding files to be trascribed.
 **NOTE: Use the custom language model to select a base model if needed.**
 
-### Post-processing file selection interface.
+### Post-processing file selection interface
 * Allows user to add existing Gailbot data and apply post-processing only.
 * For a pair of files corresponding to the same conversation, the user has to manually add both files separately with the desired speaker names.
 **NOTE: The interface asks for the combined as well as the individual audio files. These may be the same for a single file and different for a pair of files.**
@@ -100,18 +100,55 @@ Gailbot has multiple internal menus that offer a complete and clear interface.
 * The minimum length that can be recorded is 30 seconds.
 
 
-##
+## Gailbot special features
 
-##  Custom and Acoustic Language Models:
-Gailbot's Custom language model is meant to expand on Watson's existing word dictionary to transcribe specialized contexts. 
+###  Custom and Acoustic Language Models:
+* Gailbot's Custom language model is meant to expand on Watson's existing word dictionary to transcribe specialized contexts. 
 Users can add individual words, multiple words, or a corpus text file to the custom model. 
 For more details: https://console.bluemix.net/docs/services/speech-to-text/language-resource.html#corporaWords
 
-Gailbot's Acoustic language model is meant to train the service to recognize particular sound environments to improve the accuracy of the transcripts.
-Currently, Gailbot allows a '.wav' file to train the custom acoustic model.
+* Gailbot's Acoustic language model is meant to train the service to recognize particular sound environments to improve the accuracy of the transcripts. 
+
+Currently, Gailbot allows a '.wav' file to train the custom acoustic model:
 * The file must be less than 100 MB
 * The file length must be greater than 10 minutes and less than 50 hours
 * Must be a '.wav' file.
+
+### Multi-language transcription
+
+Gailbot is able to transcribe in multiple different languages including Mandarin, German, Japanese, Spanish, Portugese etc.
+This feature can be selected by selecting the appropriate base model through the custom language model interface.
+
+Users can also train custom models in other languages using the other language as a base-model to train on.
+
+### Speech rate detection
+
+Gailbot uses a statistical model developed at the Human Interaction Lab at Tufts to classify parts of speech as slow or fast relative to the average pace of the conversation (using both speakers). 
+
+This classification allows Gailbot to transcribe speech as fast and slow and add prosody markers in limited cases. 
+
+**NOTE: This feature is enabled by default but can be turned off using the post-processing interface.**
+
+### Laughter Analysis
+
+Gailbot uses a [tensorflow](https://www.tensorflow.org/) deep learning model in addition to a audio signal processing model to isolate high frequency sound signals and classify them as laughter. 
+
+This allows transcription of laughter with exact time-stamps in the final CHAT file.
+
+**NOTE: This feature is enabled by default but can be turned off using the post-processing interface.**
+
+### Beats and absolute timing
+
+Gailbot uses one of two modes to transcribe pause and gap timings. 
+These include either absolute time in seconds or beat time in beats.
+
+Beat time is a specialized conversation Analysis concept that allows transcription of pauses / gaps as relative to the conversation's average speech rate in syllables per second.
+
+**NOTE: This feature is enabled by default but can be turned off using the post-processing interface.**
+
+## Liability Notice
+
+**Please note: Gailbot and all associated software is meant to be used as an automatic transcription tool. While the development team has worked hard to produce a good product, we take no responsibility for its performance and results. Gailbot generates first pass transcripts that are meant to be corrected using human input. We do not guarantee the accuracy of any transcript. Additionally, we are not responsible for any transaction between the user and IBM Bluemix to obtain credentials for using the Watson STT Service. Although the development team plans to update the project regularly, we are not responsible for any bug-fixes or updates.**
 
 ## Contribute
 
