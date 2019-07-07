@@ -23,6 +23,7 @@ import rateAnalysis
 
 # Describes how many beats 1 second is equal to.
 SECStoBEATS = 4
+latchMarker =  u'\u2248'
 
 
 # *** Main pause / gap transcription functions ***
@@ -46,7 +47,7 @@ def pauses(infoList,CHATVals):
 			diff = round(nxt[1] - curr[2],2)
 			# In this case, the latch marker is added.
 			if diff >= CHATVals['lowerBoundLatch'] and diff <= CHATVals['upperBoundLatch']:
-				curr[3] += ' ' + CHATsymbols['latch'] + ' '
+				curr[3] += ' ' + latchMarker + ' '
 			# In this case, the normal pause markers are added.
 			elif diff >= CHATVals['lowerBoundPause'] and diff <= CHATVals['upperBoundPause']:
 				curr[3] += pauseFunc(diff,closure)
