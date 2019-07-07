@@ -40,7 +40,7 @@ You should also be aware that Gailbot uses [IBM Watson's STT API](https://cloud.
 * pip3 install -r requirements.txt
 
 6. Create an account with IBM so you can use Watson's speech-to-text service:
-* You can sign up for a trial account here: console.bluemix.net/catalog/services/speech-to-text
+* You can sign up for a trial account [here](console.bluemix.net/catalog/services/speech-to-text)
 * **Note**: Your IBM Bluemix username and password is required to establish a connection with Watson's Speech to Text service. Once you have registered you can find your credentials here: https://console.us-east.bluemix.net/developer/watson/existing-services
 * For transcription pricing details see https://www.ibm.com/cloud/watson-speech-to-text/pricing
 
@@ -60,9 +60,16 @@ Gailbot currently supports a wide variety of audio and video file formats:
 
 * Audio file formats: alaw, basic, flac, g729, pcm, mp3, mpeg, ulaw, opus, wav, webm
 
-# Gailbot menus
+## Gailbot menus
 
-Gailbot has multiple internal menus that offer a complete and clear interface. 
+Gailbot has multiple internal menus that offer a complete and clear interface.
+
+### Main-menu
+* This menu offers three options: 
+** Transcribe an existing audio/videop file.
+** Record and transcribe a new conversation.
+** Apply post-processing to existing Gailbot output.
+
 
 
 ##  Custom and Acoustic Language Models:
