@@ -51,6 +51,10 @@ Use the following command to run Gailbot:
 * python3 gailbot-3.py -username [Bluemix Username] -password [Bluemix Password]
 * Follow Gailbot's prompts to generate a transcript.
 
+When adding files to be transcribed:
+* -pair [file-1] [file-2] --> Allows a pair of files corresponding to the same conversation to be added.
+* -dir [Directory Name] --> Allows transcription of all files in a directory as separate files. Results are inside the given directory.
+* Individual files can be added without any additional flag.
 
 ## Compatible media file types
 
@@ -65,12 +69,38 @@ Gailbot currently supports a wide variety of audio and video file formats:
 Gailbot has multiple internal menus that offer a complete and clear interface.
 
 ### Main-menu
-* This menu offers three options: 
-** Transcribe an existing audio/videop file.
-** Record and transcribe a new conversation.
-** Apply post-processing to existing Gailbot output.
+1. This menu offers three options: 
+* Transcribe an existing audio/videop file.
+* Record and transcribe a new conversation.
+* Apply post-processing to existing Gailbot output.
+
+**NOTE: The last option is intended to allow users to run different post-processing using different settings without having to re-transcribe the entire conversation.**
+
+### Post-processing interface
+* This interface allows the user to select their desired combination of post-processing modules to be applied to the transcript.
+* It provides a clear status indication for the modules that will be applied.
+
+### CHAT generation module interface
+* This interface allows the user to set CHAT file parameters.
+* It allows user to change CHAT file headers and modify features including corpus name, speaker roles, speaker identities etc.
+* It allows user to modify functional parameters and thresholds for conversation features including pauses, gaps etc. Additionally, allows user to use beat-timing or absolute-timing mode.
+
+### Pre-request menu
+* Provides the user with multiple details regarding custom language and acoustic models, some IBM features, and details regarding files to be trascribed.
+**NOTE: Use the custom language model to select a base model if needed.**
+
+### Post-processing file selection interface.
+* Allows user to add existing Gailbot data and apply post-processing only.
+* For a pair of files corresponding to the same conversation, the user has to manually add both files separately with the desired speaker names.
+**NOTE: The interface asks for the combined as well as the individual audio files. These may be the same for a single file and different for a pair of files.**
 
 
+### Audio Recording Settings interface
+* Allows user to select different parameters for the audio to be recorded including bit-rate, length etc.
+* The minimum length that can be recorded is 30 seconds.
+
+
+##
 
 ##  Custom and Acoustic Language Models:
 Gailbot's Custom language model is meant to expand on Watson's existing word dictionary to transcribe specialized contexts. 
