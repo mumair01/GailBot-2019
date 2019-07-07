@@ -1,4 +1,4 @@
-# Gailbot
+# Gailbot 0.3.0
 
 GAILBOT will (G)enerate (A)n (I)nitiaL (B)allpark (O)rthographic (T)ranscript
 
@@ -6,97 +6,64 @@ GAILBOT will (G)enerate (A)n (I)nitiaL (B)allpark (O)rthographic (T)ranscript
 
 Gailbot is named after [Gail Jefferson](https://en.wikipedia.org/wiki/Gail_Jefferson), inventor of the transcription system used for [Conversation Analysis](https://en.wikipedia.org/wiki/Conversation_analysis). It can generate a first pass at a transcript that can then be improved manually.
 
+Gailbot was developed at the [Tufts Human Interaction Lab](https://sites.tufts.edu/hilab/people/) in collaboration with [Dr. Saul Albert](https://www.lboro.ac.uk/subjects/communication-media/staff/saul-albert/) at Loughborough university, UK.
+
 ## How Gailbot works
 
-Gailbot takea a recorded dialogue and uses [Watson's Speech-To-Text system](https://www.ibm.com/watson/services/speech-to-text/) to generate a transcript in the [CHAT transcription format](https://talkbank.org/manuals/CHAT.html). It then uses the [Jeffersonize](https://github.com/HiLabTufts/jeffersonize) tool to create a CA-like transcript that includes structural details of the talk such as intra-turn pauses, inter-turn gaps, and overlaps.
+Gailbot either takes in a recorded dialogue or records a new dialogue and uses an internal Speech to Text API to generate a transcript in the [CHAT transcription format](https://talkbank.org/manuals/CHAT.html). It then applies multiple post-processing modules to detect conversation speech rate, analyze laughter, and transcribe conversation features (pauses, gaps, overlaps etc.)
 
 ## Status
 Gailbot has been tested on MAC OSX.
-The current version is an early alpha, feel free to provide feedback at: hilab-dev@elist.tufts.edu
+The current version is an alpha version. Feel free to provide feedback at: hilab-dev@elist.tufts.edu
+
+Gailbot 0.3.0 includes major updates to the original Gailbot version and is intended to be used as a standalone tool.
 
 
 ## Before using gailbot
 
-In order to use Gailbot, you should have some familiarity with using the terminal to install and run software. You should also be aware that after a certain amount of free time, IBM's Watson will begin to charge for automated transcription.
-
+In order to use Gailbot, you should have some familiarity with using the terminal to install and run software.
+You should also be aware that Gailbot uses [IBM Watson's STT API](https://cloud.ibm.com/apidocs/speech-to-text) that includes transcription charges.
 
 ## Installation
 
-1. Install ffmpeg either:
+1. Install [python 3.7](https://www.python.org/downloads/release/python-373/)
 
-a) Using the [homebrew](https://brew.sh) packaging system:
-* brew install ffmpeg
+2. Install the [homebrew](https://brew.sh/) using the command:
+* mkdir homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C homebrew
 
-b) Using the binary:
-* Download the installer from: https://www.ffmpeg.org/download.html
-* Intall the tar file on the webpage using the instructions.
-* Version required: 4.0.1 or later for Mac OSX.
+3. Run 'brew install python3' to ensure that the pip3 package installer is installed.
 
-2. Download and install the CLAN editor and CAfont from TalkBank:
+4. Download and install the CLAN editor and CAfont from TalkBank:
 * https://talkbank.org/software/
 
-3. Build prerequisites
+5. Navigate to the Gailbot directory and use the 'requirements.txt' file to install all required libraries:
+* pip3 install -r requirements.txt
 
-Gailbot is written in python, you'll need version >=Python 3.7.3
-
-You'll also need some python libraries, which can be installed using python's pip packaing system. If you don't have it, you can install it with:
-
-* easy_install pip
-
-Next, use the 'requirements.txt' file to download and install all prerequisites.
-* Navigate to the directory containing the requirements file using terminal
-* Run the command: "pip install -r requirements"
-
-4. Create an account with IBM so you can use Watson's speech-to-text service:
+6. Create an account with IBM so you can use Watson's speech-to-text service:
 * You can sign up for a trial account here: console.bluemix.net/catalog/services/speech-to-text
 * **Note**: Your IBM Bluemix username and password is required to establish a connection with Watson's Speech to Text service. Once you have registered you can find your credentials here: https://console.us-east.bluemix.net/developer/watson/existing-services
 * For transcription pricing details see https://www.ibm.com/cloud/watson-speech-to-text/pricing
 
-4. Download gailbot 
-* Download or clone gailbot, then open a terminal and navigate to your gailbot directory.
+## Usage 
 
+Use the following command to run Gailbot:
 
-## Usage
-
-Use the following command to run gailbot:
-
-* python gailbot.py -credentials [Bluemix Username]:[Bluemix Password] -files [one or two MXF/Wav file names] -names [One or two speaker names]
+* python3 gailbot-3.py -username [Bluemix Username] -password [Bluemix Password]
 * Follow Gailbot's prompts to generate a transcript.
-
-**NOTE:** Always copy and paste the custom model ID without punctuation marks when/if propmted by Gailbot.
-
-
-## Options
-
-## Flags
-
-### -headers
-
-This flag enables the user to type in metadata (e.g. demographic information as per [CHAT headers](https://talkbank.org/manuals/CHAT.html#_Toc522553724)).
-
-### -thresholds 
-
-This flag allows the user to specify precision timing of gaps, latches, pauses, micropauses, and TCU cut-offs in seconds:
-
-* normal_gap = 0.3
-* latch_low = 0.01
-* latch_high = 0.05
-* normal_pause_low = 0.2
-* normal_pause_high = 1.0
-* micropause_low = 0.1
-* micropause_high = 0.2
-* very_large_pause = 1.0
-* TCU_break = 0.1
-
-The user can also select pre-set values for 'slow', 'medium', and 'fast' paced dialogue.
-
-**Note**: the values above are the 'medium' (default) values.
-
 
 
 ## Compatible media file types
-* Gailbot currently accepts '.wav' audio files (and treats each as a distinct audio channel)
-* '.MXF' video files (and splits them into two distinct wav files - one per audio channel)
+
+Gailbot currently supports a wide variety of audio and video file formats:
+
+* Video file formats: mxf, mp4, mov, wmv, flv, avi, swf, m4v
+
+* Audio file formats: alaw, basic, flac, g729, pcm, mp3, mpeg, ulaw, opus, wav, webm
+
+# Gailbot menus
+
+Gailbot has multiple internal menus that offer a complete and clear interface. 
+
 
 ##  Custom and Acoustic Language Models:
 Gailbot's Custom language model is meant to expand on Watson's existing word dictionary to transcribe specialized contexts. 
