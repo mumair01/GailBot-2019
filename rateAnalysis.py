@@ -119,7 +119,7 @@ def addDelims(dictionaryList,statsDic,jsonList):
 			elem['elem'][3] = delims['fastSpeech'] + elem['elem'][3] + delims['fastSpeech']
 			fastCount+=1
 		jsonListTurns.append(elem['elem'])
-	print("Fast turns found: {0}\nSlow turns found: {1}\n".format(slowCount,fastCount))
+	print("Fast turns found: {0}\nSlow turns found: {1}\n".format(fastCount,slowCount))
 	for elem in jsonListTurns:
 		for word in elem[3].split():words.append(word)
 	for word,elem in zip(words,jsonList[1:]): elem[3] = str(word)
