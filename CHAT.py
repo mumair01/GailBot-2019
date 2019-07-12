@@ -479,7 +479,7 @@ def buildCHAT(infoList):
 			audioName = item[0]['audioFile'][:item[0]['audioFile'].find('.')]
 		else:
 			name = item[0]['audioFile'][:item[0]['audioFile'].find('.')]
-			audioName = name[name.find('/')+1:]
+			audioName = name[name.rfind('/')+1:]
 		# Setting comments
 		if CHATVals['beatsMode']: timingMode = "Beat timing mode: Pauses/Gaps in beats"
 		else: timingMode = "Absolute timing mode: Pauses/Gaps in seconds"
@@ -504,7 +504,7 @@ def buildCHAT(infoList):
 		if item[0]['outputDir'].find('/') == -1:
 			CHATfilename = item[0]['outputDir']+'/'+ item[0]['outputDir']+ '-' +CHATname
 		else:
-			name = item[0]['outputDir'][item[0]['outputDir'].find('/')+1:]
+			name = item[0]['outputDir'][item[0]['outputDir'].rfind('/')+1:]
 			CHATfilename = item[0]['outputDir']+'/'+ name+ '-' +CHATname
 		if os.path.isfile(CHATfilename): os.remove(CHATfilename)
 		try: 

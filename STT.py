@@ -186,7 +186,7 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 		if self.sampleName.find('/') == -1:
 			self.jsonFile = self.dirOutput + "/" +self.sampleName[:self.sampleName.rfind(".")]+"-json.txt"
 		else:
-			name = self.sampleName[self.sampleName.find('/')+1:]
+			name = self.sampleName[self.sampleName.rfind('/')+1:]
 			self.jsonFile = self.dirOutput + "/" +name[:name.rfind(".")]+"-json.txt"
 		# Removing json file data will be written to if it already exists.
 		try : os.remove(self.jsonFile)
