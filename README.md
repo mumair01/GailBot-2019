@@ -38,8 +38,7 @@ You should also be aware that Gailbot uses [IBM Watson&#39;s STT API](https://cl
 
 1. Install [Python 3.7](https://www.python.org/downloads/release/python-373/)
 
-2. Install the [Homebrew](https://brew.sh/) packaging software:
-- mkdir homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C homebrew
+2. Install the [Homebrew](https://brew.sh/) packaging software (using their instructions)
 
 3. Install the pip3 package installer:
 - Brew install python3
