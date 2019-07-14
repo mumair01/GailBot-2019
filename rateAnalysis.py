@@ -26,7 +26,7 @@ from termcolor import colored
 
 
 
-tf.get_logger().setLevel(logging.ERROR) 		# Turning off tensorflow debugging messages.
+#tf.get_logger().setLevel(logging.ERROR) 		# Turning off tensorflow debugging messages.
 
 # *** Global variables / invariants ***
 
@@ -111,7 +111,8 @@ def addDelims(dictionaryList,statsDic,jsonList):
 			# For one word, adding colons to trailing vowel.
 			if len(elem['elem'][3].split())==1 and any(char in vowels for char in elem['elem'][3]):
 				pos = lastVowelPos(elem['elem'][3])
-				elem['elem'][3] = elem['elem'][3][:pos+1] + '::' + elem['elem'][3][pos+1:]
+				colons = numColons(statsDic['medianAbsDev'],elem['syllRate'])
+				elem['elem'][3] = elem['elem'][3][:pos+1] + (":"*colons) + elem['elem'][3][pos+1:]
 			else:
 				elem['elem'][3] = delims['slowSpeech'] + elem['elem'][3] + delims['slowSpeech']
 			slowCount+=1
@@ -152,6 +153,15 @@ def lastVowelPos(string):
 	    	vowelList.append(pos)
 	return vowelList[-1]
 
+# Function that calculates the number of colons to be added to the slow 
+# speech marker.
+# Input: Median absolute deviation for the syllable rate, Syllable rate of turn.
+# Output: The number of colons to be added.
+def numColons(syllRateMAD, syllRateTurn):
+	syllRateDiff = abs(syllRateTurn - syllRateMAD)
+	colons = int(round(syllRateMAD / syllRateDiff))
+	return colons
+
 '''
 
 # Function that visualizes the syllable rate to verify predictions
@@ -175,7 +185,6 @@ def visualize(dictionaryList):
 	plt.axvline(lowerLimit,color='k', linestyle='dashed', linewidth=1)
 	plt.axvline(upperLimit,color='k', linestyle='dashed', linewidth=1)
 	plt.show()
-
 
 '''
 

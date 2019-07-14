@@ -43,7 +43,8 @@ CHATVals = {
 	"turnEndThreshold" : 0.1,
 	"lowerBoundLaughAcceptance" : 0.4,
 	"LowerBoundLaughLength" : 0.05,
-	"beatsMode" : False
+	"beatsMode" : False,
+	"FTOMode" : False
 }
 CHATValsOriginal = CHATVals.copy()
 
@@ -165,6 +166,7 @@ def vals_menu(closure):
 		x.add_row(["Current lower bound - laugh length",CHATVals['LowerBoundLaughLength']])
 		x.add_row(["Current turn end threshold",CHATVals['turnEndThreshold']])
 		x.add_row(["Beat transcription mode", CHATVals['beatsMode']])
+		x.add_row(["FTO transcription mode", CHATVals['FTOMode']])
 		print(x)
 		print("\nPlease choose one of the following options:")
 		print("1. Modify lower and upper bound - latch")
@@ -175,10 +177,11 @@ def vals_menu(closure):
 		print("6. Modify lower bound - laugh length")
 		print("7. Modify gap length")
 		print('8. Modify pause transcription mode (Beats / Absolute)')
-		print("9. Reset selections to default values")
-		print(colored("10. Proceed / Confirm selection\n",'green'))
+		print("9. Modify FTO transcription mode")
+		print("10. Reset selections to default values")
+		print(colored("11. Proceed / Confirm selection\n",'green'))
 		choice = input(" >>  ")
-		if choice == '10' : return
+		if choice == '11' : return
 		exec_menu(choice,vals_actions,closure)
 
 # Actions for the main menu
@@ -284,6 +287,9 @@ def modifyGap(closure):
 def modifyBeatMode(closure):
 	CHATVals['beatsMode'] = not CHATVals['beatsMode']
 
+def modifyFTOMode(closure):
+	CHATVals['FTOMode'] = not CHATVals['FTOMode']
+
 def valsDefault(closure):
 	for k,v in CHATValsOriginal.items(): CHATVals[k] = v
 
@@ -296,7 +302,8 @@ vals_actions = {
 	'6' : modifyLaughLen,
 	'7' : modifyGap,
 	'8' : modifyBeatMode,
-	'9' : valsDefault
+	'9' : modifyFTOMode,
+	'10' : valsDefault
 }
 
 
@@ -427,6 +434,20 @@ def combineSameSpeakerTurns(infoList):
 			elif newList[-1][0] == curr[0]:
 				newList[-1][2] = curr[2] ; newList[-1][3] += ' '+curr[3]
 			else: newList.append(curr)
+		for dic in item: dic['jsonListCombined'] = newList
+	return infoList
+
+
+# Function that adds FTO's to the transcript if enabled
+# Input: list of lists containing dictionaries.
+# Output : list of lists containing dictionaries.
+def transcribeFTO(infoList):
+	if not CHATVals['FTOMode']: return infoList
+	for item in infoList:
+		jsonListCombined = item[0]['jsonListCombined'] ; newList = []
+		for count,curr in enumerate(jsonListCombined[:-1]):
+			nxt = jsonListCombined[count+1] ; FTO = str(round(nxt[1] - curr[2],1))
+			newItem = ['FTO',curr[2],nxt[1],FTO] ; newList.extend([curr,newItem])
 		for dic in item: dic['jsonListCombined'] = newList
 	return infoList
 
@@ -564,6 +585,7 @@ def writeCSVs(infoList):
 	return infoList
 
 
+
 # Dictionary of functions used to create a CHAT file
 CHAT_actions = {
 	'1' : commentMarkers,
@@ -573,11 +595,12 @@ CHAT_actions = {
 	'5' : overlaps,
 	'6' : pauses,
 	'7' : combineSameSpeakerTurns,
-	'8' : gaps,
-	'9' : CHATList,
-	'10' : buildCHAT,
-	'11' : buildCA,
-	'12' : writeCSVs
+	'8' : transcribeFTO,
+	'9' : gaps,
+	'10' : CHATList,
+	'11' : buildCHAT,
+	'12' : buildCA,
+	'13' : writeCSVs
 }
 
 # *** Helper functions for various tasks ***
