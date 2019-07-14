@@ -205,7 +205,7 @@ def getLaughterInstances(probs, threshold = 0.5, minLength = 0.2):
 def transcribeLaugh(jsonList,instances):
 	newInst = []
 	for instance in instances: 
-		newInst.append([jsonList[1][0],instance[0],instance[1]," LAUGHTER "])
+		newInst.append([jsonList[1][0],instance[0],instance[1]," &=laughs "])
 	for instance in newInst:jsonList.append(instance)
 	jsonList[1:] = sorted(jsonList[1:], key = operator.itemgetter(1))
 	return jsonList

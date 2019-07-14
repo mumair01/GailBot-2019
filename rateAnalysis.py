@@ -26,7 +26,7 @@ from termcolor import colored
 
 
 
-#tf.get_logger().setLevel(logging.ERROR) 		# Turning off tensorflow debugging messages.
+tf.get_logger().setLevel(logging.ERROR) 		# Turning off tensorflow debugging messages.
 
 # *** Global variables / invariants ***
 

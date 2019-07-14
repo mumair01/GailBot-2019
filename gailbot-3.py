@@ -101,7 +101,7 @@ audioFormatMapping = {"audio/alaw" : "alaw", "audio/basic" : "basic","audio/flac
 
 # Supported Video file formats and their extensions
 videoFormats = {"Material-Exchange-Format" : "mxf",
-				"Quicktim-File-Format" : "mov",
+				"Quicktime-File-Format" : "mov",
 				"MPEG-4" : "mp4",
 				"Windows-Media-Video" :"wmv",
 				"Flash-Video-Format" : "flv",
