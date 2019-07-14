@@ -706,7 +706,13 @@ def setSpeakers(fileList,pairDic):
 #		Output directory for combined audio file.
 def overlay(pairList,outDirDic):
 	for pair in pairList:
-		name = pair[0][:pair[0].rfind('.')]+"-"+pair[1][:pair[1].rfind('.')]+'-combined.wav'
+		if pair[0].find('/') != -1: 
+			name1 = pair[0][pair[0].rfind("/")+1:]
+		else: name1 = pair[0]
+		if pair[1].find('/') != -1: 
+			name2 = pair[1][pair[1].rfind("/")+1:]
+		else: name2 = pair[1]
+		name = name1[:name1.rfind('.')]+"-"+name2[:name2.rfind('.')]+'-combined.wav'
 		path = outDirDic[pair[0]]+'/'+name
 		cmd = shellCommands['overlay'].format(pair[0],pair[1],path)
 		devnull = open(os.devnull, 'w')
