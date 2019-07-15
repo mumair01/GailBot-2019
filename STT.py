@@ -44,7 +44,6 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 IBM_host = "stream.watsonplatform.net"				# Name of the IBM host / service.
 STT_service = "speech-to-text"						# Speech to Text service name.
 IDModels = ["en-US_BroadbandModel",  				# Base models that return speaker ID's
-			"en-GB_BroadbandModel",
 			"en-US_ShortForm_NarrowbandModel",
 			"en-US_NarrowbandModel"]
 

@@ -214,7 +214,8 @@ def request_menu(username,password,closure):
 		y.add_row(["IBM Bluemix Username",watsonVals['username']])
 		y.add_row(["IBM Bluemix password",watsonVals['password']])
 		y.add_row(["Base language model",watsonVals['base-model']])
-		y.add_row(["Base acoustic model",acoustic_model.output['base-model']])
+		if acoustic_model.output['acoustic-model'] != None:
+			y.add_row(["Base acoustic model",acoustic_model.output['base-model']])
 		y.add_row(["Custom acoustic model ID",watsonVals['acoustic-id']])
 		y.add_row(["Custom language model ID",watsonVals['custom-id']])
 		y.add_row(["X-Watson-Learning opt out",watsonVals['opt-out']])
@@ -229,7 +230,8 @@ def request_menu(username,password,closure):
 		for k,v in watsonVals['output-directory'].items(): 
 			x.add_row([k,v,watsonVals['contentType'][k],str(watsonVals['names'][k])])
 		print(x)
-		if watsonVals['base-model'] != acoustic_model.output['base-model']:
+		if (watsonVals['base-model'] != acoustic_model.output['base-model']
+			and acoustic_model.output['acoustic-model'] != None):
 			print(colored("\nWARNING: Ensure acoustic and language base model consistency",'red'))
 		print("\n1. Change base / custom language model")
 		print("2. Change custom acoustic model")
@@ -269,7 +271,8 @@ def transcribe_new(username,password,closure):
 
 	# Ensure base model consistency
 	if not request_menu(username,password,closure): return
-	while not checkBaseModels(acoustic_model.output["base-model"],language_model.output["base-model"]):
+	while not checkBaseModels(acoustic_model.output["base-model"],language_model.output["base-model"],
+		acoustic_model.output['acoustic-model']):
 		if not request_menu(username,password,closure): return
 	# Sending request.
 	sendRequest(username,password,closure)
@@ -284,7 +287,8 @@ def transcribe_recorded(username,password,closure):
 
 	# Ensure base model consistency
 	if not request_menu(username,password,closure): return 
-	while not checkBaseModels(acoustic_model.output["base-model"],language_model.output["base-model"]):
+	while not checkBaseModels(acoustic_model.output["base-model"],language_model.output["base-model"],
+		acoustic_model.output['acoustic-model']):
 		if not request_menu(username,password,closure): return 
 	sendRequest(username,password,closure)
 
@@ -727,13 +731,13 @@ def copyFile(currentPath,newDirPath):
 # Function that verifies whether the acoustic and custom base models are complementary
 # Returns True if base models are the same
 # Returns false otherwise
-def checkBaseModels(acousticBase,languageBase):
-	if acousticBase == None or languageBase == None: return True
+def checkBaseModels(acousticBase,languageBase,acousticCustom):
+	if acousticBase == None or languageBase == None or acousticCustom == None: return True
 	if str(acousticBase) == str(languageBase): return True
 	else:
 		os.system('clear')
 		print(colored("\nERROR: Ensure acoustic model and language model have the same base model",'red'))
-		print(colored("\nCurrent acostic base model: {}".format(acousticBase),'blue'))
+		print(colored("\nCurrent acoustic base model: {}".format(acousticBase),'blue'))
 		print(colored("\nCurrent language base model: {}".format(languageBase),'blue'))
 		input(colored("\nPress any key to return to pre-request menu...",'red'))
 		return False

@@ -166,7 +166,7 @@ def vals_menu(closure):
 		x.add_row(["Current lower bound - laugh length",CHATVals['LowerBoundLaughLength']])
 		x.add_row(["Current turn end threshold",CHATVals['turnEndThreshold']])
 		x.add_row(["Beat transcription mode", CHATVals['beatsMode']])
-		x.add_row(["FTO transcription mode", CHATVals['FTOMode']])
+		x.add_row(["FTO (Floor transfer offset) transcription mode", CHATVals['FTOMode']])
 		print(x)
 		print("\nPlease choose one of the following options:")
 		print("1. Modify lower and upper bound - latch")
