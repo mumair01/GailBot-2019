@@ -78,7 +78,7 @@ CHATsymbols = {
 CHATname = 'Results.cha'
 
 # List containing separate CSV headings.
-CSVfields = ['Speaker Label','Start Time','End Time','Transcript']
+CSVfields = ['Speaker Label','Start Time','End Time','Transcript','FTO']
 
 # ***********************
 
@@ -440,16 +440,22 @@ def combineSameSpeakerTurns(infoList):
 
 # Function that adds FTO's to the transcript if enabled
 # Input: list of lists containing dictionaries.
+#		If FTO mode if enabled, adds the FTO's to the CHAT file and CSV file.
+#		If FTO mode if disabled, adds the FTO's to CSV file only
 # Output : list of lists containing dictionaries.
 def transcribeFTO(infoList):
-	if not CHATVals['FTOMode']: return infoList
 	for item in infoList:
 		jsonListCombined = item[0]['jsonListCombined'] ; newList = []
 		for count,curr in enumerate(jsonListCombined[:-1]):
-			nxt = jsonListCombined[count+1] ; FTO = str(round(nxt[1] - curr[2],1))
-			newItem = ['FTO',curr[2],nxt[1],FTO] ; newList.extend([curr,newItem])
+			nxt = jsonListCombined[count+1] ; FTO = nxt[1] - curr[2]
+			curr.append(round(FTO,4))
+			if CHATVals['FTOMode']:
+				newItem = ['FTO',curr[2],nxt[1],str(round(FTO,1))] ; newList.extend([curr,newItem])
+			else: newList.append(curr)
+		newList.append(jsonListCombined[-1])
 		for dic in item: dic['jsonListCombined'] = newList
 	return infoList
+
 
 # Function that adds gaps to the transcript
 # Input: list of lists containing dictionaries.

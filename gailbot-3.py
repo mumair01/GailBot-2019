@@ -35,7 +35,8 @@ import subprocess
 import queue as Queue 
 import tempfile									# Directory library
 import shutil									# Directory library
-import glob 									# Directory library
+from distutils.dir_util import copy_tree
+import inquirer 								# Selection interface library.
 
 # Gailbot scripts
 import STT 										# Script that sends transcription requests
@@ -238,12 +239,13 @@ def request_menu(username,password,closure):
 		print("3. Change X-Watson-Learning status")
 		print("4. Change authentication type")
 		print("5. Change customization weight")
-		print("6. Restore defaults")
-		print(colored("7. Start transcription",'green'))
-		print(colored("8. Return to main menu\n",'red'))
+		print("6. Change output directories")
+		print("7. Restore defaults")
+		print(colored("8. Start transcription",'green'))
+		print(colored("9. Return to main menu\n",'red'))
 		choice = input(" >>  ")
-		if choice == '8' : return False
-		if choice == '7' : return True
+		if choice == '9' : return False
+		if choice == '8' : return True
 		exec_menu(choice,request_actions,username,password,True)				# Passing True to reset value.
 		if len(watsonVals['files']) == 0 : return False
 
@@ -434,6 +436,42 @@ def modifyWeight(username,password,closure):
 	if watsonVals['customizationWeight'] < 0 :
 		watsonVals['customizationWeight'] = watsonValsOriginal['customizationWeight']
 
+# Function that allows user to change output directories for files.
+def changeDirectory(username,password,closure):
+	x = PrettyTable() ; fileList = [] ; fileDir = {}
+	x.title = colored("Out Directory Selection",'red')
+	x.field_names = [colored("File",'blue'),colored("Output Directory",'blue'),
+		colored("File type",'blue'),colored("Pair Files",'blue')]
+	values = list(watsonVals['output-directory'].values())
+	for k,v in watsonVals['output-directory'].items():
+		# Determining if file is single or pair file.
+		if values.count(v) == 1: x.add_row([k,v,"Single File",None])
+		else: 
+			pairFiles = [k for k,val in watsonVals['output-directory'].items() if val == v]
+			x.add_row([k,v,"Pair File",pairFiles])
+		fileList.append(k + " : " + v)
+	print(x) ; print("\n")
+	# Getting new Directory input.
+	res = generalInquiry(fileList,"File Selected")
+	if res == colored('Return','red'): return
+	fileName = res[:res.find(":")-1] ; direct = watsonVals['output-directory'][fileName]
+	# Getting files whose output directory will be modified.
+	pairFiles = [k for k,val in watsonVals['output-directory'].items() if val == direct]
+	print('Specify output directory path for file: {}\n'
+		'Press 0 to go back to options\n'.format(fileName))
+	get_val(fileDir,"outDir",str) 
+	if fileDir["outDir"][0] == '.' and fileDir["outDir"][1] =='/': fileDir["outDir"] = fileDir["outDir"][2:]
+	if fileDir['outDir'] == None: return
+	# Setting output directory.
+	if direct.rfind("/") != -1: out = fileDir['outDir'] + '/' +direct[direct.rfind("/")+1:]
+	else: out = fileDir['outDir'] +'/'+ direct
+	setOutputDir(pairFiles,out)
+	# Removing original directory
+	try: os.rmdir(direct)
+	except: 
+		copy_tree(direct,out) ;shutil.rmtree(direct)
+
+
 # Function that restores watsonVals to defaults
 def watsonDefaults(username,password,closure):
 	for k,v in watsonValsOriginal.items(): watsonVals[k] = v
@@ -443,6 +481,7 @@ def watsonDefaults(username,password,closure):
 	# Getting new audio file names before returning to main menu 
 	getAudioFileList(closure)			
 
+
 # Actions for the request menu
 request_actions = {
 	'1' : modifyLangModel,
@@ -450,8 +489,22 @@ request_actions = {
 	'3' : modifyLearning,
 	'4' : modifyAuth,
 	'5' : modifyWeight,
-	'6' : watsonDefaults,
+	'6' : changeDirectory,
+	'7' : watsonDefaults
 }
+
+
+# Function that allows user to select one option
+def generalInquiry(choiceList,message):
+	choiceList.append(colored("Return",'red'))
+	options = [
+			inquirer.List('inputVal',
+				message=message,
+				choices=choiceList,
+				),
+		]
+	print(colored("Proceed --> Enter / Return key\n",'green'))
+	return inquirer.prompt(options)['inputVal']
 
 # *** Helper functions for various tasks ***
 
@@ -741,7 +794,6 @@ def checkBaseModels(acousticBase,languageBase,acousticCustom):
 		print(colored("\nCurrent language base model: {}".format(languageBase),'blue'))
 		input(colored("\nPress any key to return to pre-request menu...",'red'))
 		return False
-
 
 
 if __name__ == '__main__':
