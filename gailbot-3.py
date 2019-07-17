@@ -532,6 +532,7 @@ def getAudioFileList(getVal=True):
 		print("NOTE: Use " + colored("'-dir [directory name]'",'red'),
 			"to input all files in a directory. " +
 			colored("Sub-directories not included",'red'))
+		print(colored("NOTE: File path cannot have '\\ ' .",'red'))
 		print("Press 0 to go back to options\n")
 		localDic = {}
 		if get_val(localDic,'files',list)==None: return
