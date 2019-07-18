@@ -316,3 +316,16 @@ The model used to calculate beat timing was developed at the Tufts Human Interac
 - The beat time is the pause or gap time in seconds multiplied by the median syllable rate per second.
 - The beat time in seconds is the above value divided by 4.
 - The beat time in seconds is added to the transcript.
+
+
+## Liability Notice
+
+**Gailbot is a tool to be used to generate specialized transcripts. However, it is not responsible for the quality of any output produced. Generated transcripts are meant to be a first pass in the transcription process and are designed to be improved incrementally. They are not meant to replace the manual transcription process and can be improved upon. Gailbot uses IBM Watson&#39;s Speech to Text API to generate text which required an IBM Bluemix account. The development team is not liable for any third-party transaction between the user and any external service used by Gailbot.**
+
+**Additionally, the development team does not guarantee the accuracy or correctness of any statistical model used in Gailbot. These models have been developed in good faith and we hope that they are accurate. Users should always verify results.**
+
+**We are committed to continue and develop Gailbot. Any feedback can be provided at:** [**hilab-dev@elist.tufts.edu**](mailto:hilab-dev@elist.tufts.edu) **.**
+
+**However, we do not guarantee any response to emails/requests sent to us. We do not guarantee any bug-fixes or future updates.**
+
+**Gailbot is an open-source product. We encourage its use in research. However, by using Gailbot, users agree to cite Gailbot and the Tufts Human Interaction Lab in any publications or results found as a direct or indirect result of using Gailbot.**
