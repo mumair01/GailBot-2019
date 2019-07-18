@@ -1,0 +1,16 @@
+@Begin
+@Languages:	eng
+@Participants:	SP1 SP1 Unidentified, SP2 SP2 Unidentified
+@Options:	CA
+@ID:	eng|In_Conversation_Corpus|SP1||male|||Unidentified|||
+@ID:	eng|In_Conversation_Corpus|SP2||male|||Unidentified|||
+@Media:	Recorded,audio
+@Comment:	Beat timing mode: Pauses/Gaps in beats
+@Transcriber:	Gailbot 0.3.0
+@Location:	HI_LAB
+@Room Layout:	HI-LAB Duplex
+@Situation:	Human Interaction Lab Tufts
+@New Episode
+*SP1:	&=laughs  (0.2) one .  0_2000
+*SP2:	two (0.1) three four five 2050_4040
+@End

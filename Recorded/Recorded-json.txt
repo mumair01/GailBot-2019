@@ -1,0 +1,324 @@
+[
+    {
+        "processing_metrics": {
+            "periodic": false,
+            "processed_audio": {
+                "received": 4.14,
+                "seen_by_engine": 2.56,
+                "speaker_labels": 0.0,
+                "transcription": 1.41
+            },
+            "wall_clock_since_first_byte_received": 1.67
+        },
+        "result_index": 0,
+        "results": [
+            {
+                "alternatives": [
+                    {
+                        "timestamps": [
+                            [
+                                "one",
+                                1.46,
+                                2.0
+                            ]
+                        ],
+                        "transcript": "one ",
+                        "word_confidence": []
+                    }
+                ],
+                "final": false
+            }
+        ]
+    },
+    {
+        "processing_metrics": {
+            "periodic": false,
+            "processed_audio": {
+                "received": 5.2,
+                "seen_by_engine": 3.56,
+                "speaker_labels": 0.0,
+                "transcription": 2.71
+            },
+            "wall_clock_since_first_byte_received": 2.32
+        },
+        "result_index": 0,
+        "results": [
+            {
+                "alternatives": [
+                    {
+                        "timestamps": [
+                            [
+                                "one",
+                                1.46,
+                                2.0
+                            ],
+                            [
+                                "two",
+                                2.05,
+                                2.43
+                            ],
+                            [
+                                "three",
+                                2.59,
+                                2.83
+                            ],
+                            [
+                                "one",
+                                2.83,
+                                3.08
+                            ]
+                        ],
+                        "transcript": "one two three one ",
+                        "word_confidence": []
+                    }
+                ],
+                "final": false
+            }
+        ]
+    },
+    {
+        "processing_metrics": {
+            "periodic": false,
+            "processed_audio": {
+                "received": 5.89,
+                "seen_by_engine": 4.31,
+                "speaker_labels": 0.0,
+                "transcription": 3.21
+            },
+            "wall_clock_since_first_byte_received": 2.7
+        },
+        "result_index": 0,
+        "results": [
+            {
+                "alternatives": [
+                    {
+                        "timestamps": [
+                            [
+                                "one",
+                                1.46,
+                                2.0
+                            ],
+                            [
+                                "two",
+                                2.05,
+                                2.43
+                            ],
+                            [
+                                "three",
+                                2.59,
+                                2.83
+                            ],
+                            [
+                                "one",
+                                2.83,
+                                3.08
+                            ],
+                            [
+                                "four",
+                                3.11,
+                                3.64
+                            ]
+                        ],
+                        "transcript": "one two three one four ",
+                        "word_confidence": []
+                    }
+                ],
+                "final": false
+            }
+        ]
+    },
+    {
+        "processing_metrics": {
+            "periodic": false,
+            "processed_audio": {
+                "received": 6.78,
+                "seen_by_engine": 5.06,
+                "speaker_labels": 0.0,
+                "transcription": 3.71
+            },
+            "wall_clock_since_first_byte_received": 3.22
+        },
+        "result_index": 0,
+        "results": [
+            {
+                "alternatives": [
+                    {
+                        "timestamps": [
+                            [
+                                "one",
+                                1.46,
+                                2.0
+                            ],
+                            [
+                                "two",
+                                2.05,
+                                2.43
+                            ],
+                            [
+                                "three",
+                                2.59,
+                                3.07
+                            ],
+                            [
+                                "four",
+                                3.11,
+                                3.64
+                            ],
+                            [
+                                "five",
+                                3.72,
+                                4.04
+                            ]
+                        ],
+                        "transcript": "one two three four five ",
+                        "word_confidence": []
+                    }
+                ],
+                "final": false
+            }
+        ]
+    },
+    {
+        "processing_metrics": {
+            "periodic": false,
+            "processed_audio": {
+                "received": 7.94,
+                "seen_by_engine": 6.56,
+                "speaker_labels": 0.0,
+                "transcription": 4.85
+            },
+            "wall_clock_since_first_byte_received": 3.82
+        },
+        "result_index": 0,
+        "results": [
+            {
+                "alternatives": [
+                    {
+                        "confidence": 0.57,
+                        "timestamps": [
+                            [
+                                "one",
+                                1.46,
+                                2.0
+                            ],
+                            [
+                                "two",
+                                2.05,
+                                2.43
+                            ],
+                            [
+                                "three",
+                                2.59,
+                                3.07
+                            ],
+                            [
+                                "four",
+                                3.11,
+                                3.64
+                            ],
+                            [
+                                "five",
+                                3.72,
+                                4.04
+                            ]
+                        ],
+                        "transcript": "one two three four five ",
+                        "word_confidence": [
+                            [
+                                "one",
+                                0.98
+                            ],
+                            [
+                                "two",
+                                0.19
+                            ],
+                            [
+                                "three",
+                                0.56
+                            ],
+                            [
+                                "four",
+                                0.73
+                            ],
+                            [
+                                "five",
+                                0.1
+                            ]
+                        ]
+                    }
+                ],
+                "final": true
+            }
+        ]
+    },
+    {
+        "processing_metrics": {
+            "periodic": false,
+            "processed_audio": {
+                "received": 8.15,
+                "seen_by_engine": 6.56,
+                "speaker_labels": 0.0,
+                "transcription": 4.85
+            },
+            "wall_clock_since_first_byte_received": 3.95
+        },
+        "speaker_labels": [
+            {
+                "confidence": 0.48,
+                "final": false,
+                "from": 1.46,
+                "speaker": 0,
+                "to": 2.0
+            },
+            {
+                "confidence": 0.48,
+                "final": false,
+                "from": 2.05,
+                "speaker": 1,
+                "to": 2.43
+            },
+            {
+                "confidence": 0.47,
+                "final": false,
+                "from": 2.59,
+                "speaker": 1,
+                "to": 3.07
+            },
+            {
+                "confidence": 0.44,
+                "final": false,
+                "from": 3.11,
+                "speaker": 2,
+                "to": 3.64
+            },
+            {
+                "confidence": 0.43,
+                "final": false,
+                "from": 3.72,
+                "speaker": 2,
+                "to": 4.04
+            }
+        ]
+    },
+    {
+        "processing_metrics": {
+            "periodic": false,
+            "processed_audio": {
+                "received": 29.99,
+                "seen_by_engine": 29.99,
+                "speaker_labels": 25.9,
+                "transcription": 29.97
+            },
+            "wall_clock_since_first_byte_received": 16.35
+        },
+        "speaker_labels": [
+            {
+                "confidence": 0.43,
+                "final": true,
+                "from": 3.72,
+                "speaker": 2,
+                "to": 4.04
+            }
+        ]
+    }
+]
