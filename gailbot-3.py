@@ -37,6 +37,7 @@ import tempfile									# Directory library
 import shutil									# Directory library
 from distutils.dir_util import copy_tree
 import inquirer 								# Selection interface library.
+import AppKit 									# Terminal resizing library.
 
 # Gailbot scripts
 import STT 										# Script that sends transcription requests
@@ -136,6 +137,10 @@ shellCommands = {
 
 # Queue of intermediate files to be deleted at the end of request.
 deleteQueue = Queue.Queue()
+
+# Original terminal size
+TERMcols = 75
+TERMrows = 30
 
 
 # ***********************
@@ -296,7 +301,8 @@ def transcribe_recorded(username,password,closure):
 
 # Exit program
 def exit(username,password,closure):
-    sys.exit()
+	resizeOriginal(TERMcols,TERMrows)
+	sys.exit()
 
 # Actions for the main menu
 menu_actions = {
@@ -469,7 +475,8 @@ def changeDirectory(username,password,closure):
 	# Removing original directory
 	try: os.rmdir(direct)
 	except: 
-		copy_tree(direct,out) ;shutil.rmtree(direct)
+		try: copy_tree(direct,out) ;shutil.rmtree(direct)
+		except distutils.errors.DistutilsFileError:pass
 
 
 # Function that restores watsonVals to defaults
@@ -632,8 +639,9 @@ def sendRequest(username,password,closure):
 	# Restoring defaults after request
 	watsonDefaults(username,password,False)
 	recordDefaults(username,password,closure)
-	# Preventing the reactor from restarting.
 	time.sleep(0.5)
+	# Preventing the reactor from restarting.
+	os.system('reset')
 	os.execl(sys.executable, sys.executable, *sys.argv)	
 
 # Function that converts audio to ogg / opus format.
@@ -796,6 +804,30 @@ def checkBaseModels(acousticBase,languageBase,acousticCustom):
 		input(colored("\nPress any key to return to pre-request menu...",'red'))
 		return False
 
+# Function that re-sizes terminal to maximum size
+def resizeMax():
+	os.system('reset')
+	size = ([(screen.frame().size.width, screen.frame().size.height)
+    for screen in AppKit.NSScreen.screens()])
+	sys.stdout.write("\x1b[8;{rows};{cols}t".format(rows=size[0][1], cols=size[0][0]))
+
+# Function that resizes terminal window to original size
+def resizeOriginal(cols,rows):
+	sys.stdout.write("\x1b[8;{rows};{cols}t".format(rows=rows, cols=cols))
+
+# Function that returns the current terminal size.
+def get_terminal_size(fallback=(80, 24)):
+    for i in range(0,3):
+        try:
+            columns, rows = os.get_terminal_size(i)
+        except OSError:
+            continue
+        break
+    else:  # set default if the loop completes which means all failed
+        columns, rows = fallback
+    return columns, rows
+
+
 
 if __name__ == '__main__':
 
@@ -810,7 +842,9 @@ if __name__ == '__main__':
 		help = 'IBM bluemix password', required = True)
 	args = parser.parse_args()
 
+	resizeMax()
 	interface(args.username,args.password)
+	resizeOriginal(TERMcols,TERMrows)
 
 
 
