@@ -197,6 +197,14 @@ Base models can be modified using the **Pre-request menu**.
 
 **\*\*NOTE:** The base model in this case is the base model for both the **custom language model** and the **custom acoustic model** (defined below) **.** A custom acoustic model must be trained in cases where it does not exist for a specific base model.
 
+**Configuration file**
+
+Gailbot is designed to be a highly flexible tool for use in different environments.
+
+As such, users can modify a 'config.yaml' file containing different variables used by Gailbot permanently. In effect, this will allow users to change default settings permanenlty instead of having to modify them each time Gailbot is used.
+
+**\*\*NOTE:** It is the user's responsiblity to set the correct 'type' i.e. integer, string etc. of configuration variables. A failure to do so may result in Gailbot not performing as expected or not running at all.
+
 ## Special Features and Post-processing
 
 Gailbot&#39;s post-processing modules take the verbatim transcript data produced by the Speech-to-text API and apply user-defined heuristics, statistical models, machine learning models and neural networks to add a range of structural features of conversation to the final transcription files. This extensible set of features currently includes turn-taking, silences, laughter, speech rate, and overlaps.
