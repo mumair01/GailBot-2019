@@ -38,6 +38,7 @@ import shutil									# Directory library
 from distutils.dir_util import copy_tree
 import inquirer 								# Selection interface library.
 import AppKit 									# Terminal resizing library.
+import yaml 									# Yaml parsing library.
 
 # Gailbot scripts
 import STT 										# Script that sends transcription requests
@@ -69,12 +70,12 @@ maxChunkBytes = 90000000   								# Max audio length per request = 90 MB.
 
 # Audio recording variables
 recordingVals = {
-"Recording_chunk_size" : 1024,						# Size of chunk that can be recorded
-"Format" : pyaudio.paInt16,							# Recording format
-"channels" : 1,										# Number of audio channels
-"recordSeconds" : 30,								# Number of seconds to be recorded
-"rate" : 48000,										# Recording rate
-"audioFilename" : 'Recorded.wav'}
+		"Recording_chunk_size" : 1024,						# Size of chunk that can be recorded
+		"channels" : 1,										# Number of audio channels
+		"recordSeconds" : 30,								# Number of seconds to be recorded
+		"rate" : 48000,										# Recording rate
+	#	"audioFilename" : 'Recorded.wav',
+	"Format" : pyaudio.paInt16}								# Recording format
 recordingValsOriginal = recordingVals.copy()
 
 # Watson request variables
@@ -83,13 +84,13 @@ watsonVals = {
 	"password" : "",
 	"output-directory" : {},
 	"base-model" : "en-US_BroadbandModel",
-	"acoustic-id" : None,
-	"custom-id" : None,
+#	"acoustic-id" : None,
+#	"custom-id" : None,
 	"opt-out" : True,
 	"token-type" : "Access",
 	"names" : {},
 	"contentType" : {},
-	"customizationWeight" : 0.5,
+#	"customizationWeight" : 0.5,
 	"files" : [],
 	'combinedAudio' : {}
 }
@@ -827,6 +828,19 @@ def get_terminal_size(fallback=(80, 24)):
         columns, rows = fallback
     return columns, rows
 
+# Function that loads in the yaml configuration file and sets all variables
+def config():
+	try: stream = open("config.yaml",'r')
+	except: return
+	dic = yaml.load(stream,Loader=yaml.FullLoader)
+	# Configuring CHAT file
+	if 'CHAT' in dic.keys():
+		for k,v in dic['CHAT']['CHATheaders'].items(): CHAT.CHATheaders[k] = v
+		for k,v in dic['CHAT']['CHATVals'].items(): CHAT.CHATVals[k] = v
+	if 'Gailbot' in dic.keys():
+		for k,v in dic['Gailbot']['recordingVals'].items(): recordingVals[k] = v
+		for k,v in dic['Gailbot']['watsonVals'].items(): watsonVals[k] = v
+
 
 
 if __name__ == '__main__':
@@ -842,6 +856,7 @@ if __name__ == '__main__':
 		help = 'IBM bluemix password', required = True)
 	args = parser.parse_args()
 
+	config()
 	resizeMax()
 	interface(args.username,args.password)
 	resizeOriginal(TERMcols,TERMrows)

@@ -1,0 +1,45 @@
+---
+
+Gailbot:
+  recordingVals:
+    audioFilename: 'Recorded.wav'
+  watsonVals:
+    acoustic-id:
+    custom-id: 
+    customizationWeight: 0.5
+
+CHAT:
+  CHATVals:
+    gap: 0.3
+    lowerBoundLatch: 0.01
+    upperBoundLatch: 0.09
+    lowerBoundPause: 0.2
+    upperBoundPause: 1.0
+    lowerBoundMicropause: 0.1
+    upperBoundMicropause: 0.2
+    LargePause: 1.0
+    turnEndThreshold: 0.1
+    lowerBoundAcceptance: 0.4
+    LowerBoundLaughLength: 0.05
+    beatsMode: False
+    FTOMode: False
+
+  CHATheaders:
+    corpusName: "In_Conversation_Corpus"
+    language: "eng"
+    speaker1Gender: "male"
+    speaker2Gender: "male"
+    corpusLocation: "HI_LAB"
+    roomLayout: "HI-LAB Duplex"
+    situation: "Human Interaction Lab Tufts"
+    speaker1Role: "Unidentified"
+    speaker2Role: "Unidentified"
+
+
+
+
+
+
+
+
+
