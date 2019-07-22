@@ -123,6 +123,12 @@ There are multiple ways to add supported files to Gailbot:
 - Add multiple files as separate files by placing them in a unique directory and using the **&#39;-dir&#39;** flag as follows:
   - '-dir [Directory Name]'
 
+- To transcribe a directory with sub-directories containing two files part of the same conversation, use the '-dirPair' flag as follows:
+  - '-dirPair [Directory Name]'
+  - Note that the input directory must be organized as follows:
+  	- Have sub-directories
+  	- The sub-directories must contain **only** two files that are individual files part of the same conversation.
+
 
 **STEP 2:** Select post-processing modules to be applied
 

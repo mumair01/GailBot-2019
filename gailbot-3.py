@@ -158,8 +158,9 @@ def exec_menu(choice,function_list,username,password,closure):
     choice = choice.lower()
     if choice == '': return
     else:
-        try: function_list[choice](username,password,closure)
-        except KeyError: print("Invalid selection, please try again.\n")
+    	function_list[choice](username,password,closure)
+        #try: function_list[choice](username,password,closure)
+        #except KeyError: print("Invalid selection, please try again.\n")
     return
 
 # Main menu function
@@ -533,25 +534,36 @@ def getAudioFileList(getVal=True):
 	print(audioTable)
 	print(videoTable)
 	print('\n')
+	print(colored("USAGE:",'red'))
+	print(colored("Transcribe single file using dialogue model --> [Filename]"))
+	print(colored("Transcribe a file pair using the individual speaker model --> '-pair [File-1] [File-2]"))
+	print(colored("Transcribe all directory files with dialogue model --> '-dir [director name]'"))
+	print(colored("Transcribe sub-directories using individual speaker model --> "
+		"'-dirPair [directory name]'\n"))
 	while True:
 		print("Enter audio/video file name(s)-"+ colored(" Space delimited",'red'))
-		print("NOTE: Use " + colored("'-pair [file-1] [file-2]'",'red'),
-			"to input an audio file pair part of a single conversation")
-		print("NOTE: Use " + colored("'-dir [directory name]'",'red'),
-			"to input all files in a directory. " +
-			colored("Sub-directories not included",'red'))
 		print(colored("NOTE: File path cannot have '\\ ' .",'red'))
 		print("Press 0 to go back to options\n")
 		localDic = {}
 		if get_val(localDic,'files',list)==None: return
+
+
+		# Extracting '-dirPair' flag files
+		localDic['files']= setDirPairs(localDic['files'])
+
+
 		# Extracting all files from a directory and removing -directory flag
 		localDic['files'] = setDirectoryFiles(localDic['files'])
-		if len(localDic['files']) == 0: print("\nERROR: File does not exist") ; continue
+
+
+		if len(localDic['files']) == 0: print(colored("\nERROR: No files to process\n",'red')) ; continue
 		# Extracting pairs from the input list and removing -pair keyword
 		localDic['files'],pairDic = setFilePairs(localDic['files'])
+
+
 		# Ensuring files exist
 		if any(file for file in localDic['files'] if not os.path.isfile(file)):
-			print("\nERROR: File does not exist") ; continue
+			print(colored("\nERROR: File does not exist",'red')) ; continue
 		# Verifying file formats.
 		if not verifyFormat(videoFormats,audioFormatMapping,localDic['files']): continue
 		# Extracting audio from video inputs.
@@ -733,7 +745,8 @@ def setFilePairs(fileList):
 				ext = False ; newList = [] ; continue
 		if file == '-pair': ext = True
 	for count,listElem in enumerate(pairDic['files']):
-		setOutputDir(listElem,'pair-{}'.format(count))
+		if not any(x in listElem for x in watsonVals['output-directory'].keys()):
+			setOutputDir(listElem,'pair-{}'.format(count))
 	fileList = [val for val in fileList if val != '-pair']
 	return fileList,pairDic
 
@@ -749,12 +762,38 @@ def setDirectoryFiles(fileList):
 		elif file == '-dir': ext = True
 		else: 
 			if not os.path.isfile(file) and file != '-pair':
-				print("\nERROR: File does not exist") ; return []
+				print(colored("\nERROR: File does not exist",'red')) ; return []
 			newList.append(file)
 	# Ensuring files are supported.
 	newList = [file for file in newList if file[file.rfind('.')+1:] in videoFormats.values()
 			or  file[file.rfind('.')+1:] in audioFormatMapping.values()or file == '-pair']
 	return newList
+
+# Function that extracts the files from the sub-folders in a folder and sets them
+# as pair files.
+# Asserts that all sub-directories have two files exactly.
+def setDirPairs(fileList):
+	newList = [] ; ext = False
+	for file in fileList: 
+		if ext:
+			subDirs = [direct for direct in os.listdir(file) if os.path.isdir(os.path.join(file,direct))]
+			for direct in subDirs:
+				x = os.listdir(os.path.join(file,direct))
+				dirFiles = [file for file in x if file[0] != '.']
+				if len(dirFiles) != 2: print(colored("ERROR: Sub-directory does not have two pair files:"
+					" {}".format(direct),'red'))
+				else:
+					files = dirFiles
+					newList.extend(['-pair',os.path.join(file+"/"+direct,files[0]),
+						os.path.join(file+"/"+direct,files[1])])
+					setOutputDir([os.path.join(file+"/"+direct,files[0]),
+						os.path.join(file+"/"+direct,files[1])],
+						file+"/"+direct+"/pair")
+			ext = False
+		elif file == '-dirPair' : ext = True
+		else: newList.append(file)
+	return newList
+
 
 # Function that sets speaker names for each file.
 # Pair files have two different speakers per file.
