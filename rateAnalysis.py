@@ -159,6 +159,8 @@ def lastVowelPos(string):
 # Output: The number of colons to be added.
 def numColons(syllRateMAD, syllRateTurn):
 	syllRateDiff = abs(syllRateTurn - syllRateMAD)
+	# Handling case where difference is 0 i.e. denominator cannot be 0.
+	if syllRateDiff == 0: syllRateDiff = 0.1
 	colons = int(round(syllRateMAD / syllRateDiff))
 	return colons
 

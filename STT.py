@@ -232,7 +232,7 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 			"continuous" : True,											# Prevents timeout due to inactivity.
 			"audio_metrics":True,											# Returns signal characteristics of data
 			"content-type": str(self.contentType),							# Specifies format of audio data sent.
-			"inactivity_timeout": -1,										# Time (seconds) of no audio after which service terminates request
+			"inactivity_timeout": 600,										# Time (seconds) of no audio after which service terminates request
 			"interim_results": True,										# Service returns intermediate results
 			'max_alternatives': 1,											# The number of alternative results recieved.
 			"processing_metrics": True,										# Detailed service analysis notes
@@ -293,6 +293,7 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 		print('Websocket Connection closed:\n\tCode: {0}\n\tReason: {1}\n'
 		'\twasClean: {2}'.format(code,reason,wasClean))
 		# Dumping results to a json file.
+		print("Data dumped: {}".format(self.jsonFile))
 		with open(self.jsonFile,"a") as f: f.write(json.dumps(self.json_output, indent=4,sort_keys=True))
 
 		# Adding file info to output information dictionary

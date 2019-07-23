@@ -43,12 +43,18 @@ You should also be aware that Gailbot uses [IBM Watson&#39;s STT API](https://cl
 3. Install the pip3 package installer:
 - Brew install python3
 
-4. Download and install the [CLAN editor](http://dali.talkbank.org/clan/) and [CAfont](http://dali.talkbank.org/clan/CAfont.otf) from [Talkbank](https://talkbank.org/software/).
+4. Run the following commands:
+- Brew install ffmpeg
+- Brew remove portaudio
+- Brew install portaudio
+- pip3 install pyaudio
 
-5. Navigate to the Gailbot directory and use the &#39;requirements.txt&#39; file to install all libraries:
+5. Download and install the [CLAN editor](http://dali.talkbank.org/clan/) and [CAfont](http://dali.talkbank.org/clan/CAfont.otf) from [Talkbank](https://talkbank.org/software/).
+
+6. Navigate to the Gailbot directory and use the &#39;requirements.txt&#39; file to install all libraries:
 - Pip3 install -r requirements.txt
 
-6. Create an account with IBM so you can use Watson&#39;s speech-to-text service
+7. Create an account with IBM so you can use Watson&#39;s speech-to-text service
 - You can sign up for a trial account [here](http://console.bluemix.net/catalog/services/speech-to-text).
 - **NOTE:** Your IBM Bluemix username and password are required to establish a connection with Watson&#39;s Speech to Text service. Once you have registered you can find your credentials [here](ttps://console.us-east.bluemix.net/developer/watson/existing-services).
 - Find transcription pricing [here](https://www.ibm.com/cloud/watson-speech-to-text/pricing).
