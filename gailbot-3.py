@@ -774,8 +774,10 @@ def setDirectoryFiles(fileList):
 # Asserts that all sub-directories have two files exactly.
 def setDirPairs(fileList):
 	newList = [] ; ext = False
-	for file in fileList: 
+	for file in fileList:
 		if ext:
+			if not os.path.exists(file): 
+				print(colored("\nERROR: Not found: {}".format(file),'red')) ; continue 
 			subDirs = [direct for direct in os.listdir(file) if os.path.isdir(os.path.join(file,direct))]
 			for direct in subDirs:
 				x = os.listdir(os.path.join(file,direct))
