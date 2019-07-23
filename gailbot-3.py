@@ -158,9 +158,8 @@ def exec_menu(choice,function_list,username,password,closure):
     choice = choice.lower()
     if choice == '': return
     else:
-    	function_list[choice](username,password,closure)
-        #try: function_list[choice](username,password,closure)
-        #except KeyError: print("Invalid selection, please try again.\n")
+        try: function_list[choice](username,password,closure)
+        except KeyError: print("Invalid selection, please try again.\n")
     return
 
 # Main menu function
