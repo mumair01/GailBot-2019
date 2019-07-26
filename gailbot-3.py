@@ -899,9 +899,9 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	config()
-	#resizeMax()
+	resizeMax()
 	interface(args.username,args.password)
-	#resizeOriginal(TERMcols,TERMrows)
+	resizeOriginal(TERMcols,TERMrows)
 
 
 
