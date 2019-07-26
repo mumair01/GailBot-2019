@@ -23,6 +23,7 @@ import tensorflow as tf 						# Deep neural network library
 import operator
 import logging
 from termcolor import colored
+import audioread
 
 # Gailbot scripts
 import CHAT										# Script to produce CHAT files.
@@ -75,6 +76,9 @@ def segmentLaugh(audioFile, modelPath, outputPath,threshold, minLength,
 	try: timeSeries, samplingRate = librosa.load(audioFile,sr =AUDIO_SAMPLE_RATE)
 	except FileNotFoundError:
 		print(colored("ERROR: File not found: {}".format(audioFile),'red')) ; return jsonList
+	except audioread.exceptions.NoBackendError:
+		print(colored("\nERROR: File is not an audio file: {}\n".format(audioFile),'red'))
+		return jsonList
 	# Getting a list of different audio features for analysis.
 	featureList = getFeatureList(timeSeries,samplingRate)
 

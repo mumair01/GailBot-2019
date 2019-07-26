@@ -158,6 +158,7 @@ def exec_menu(choice,function_list,username,password,closure):
     choice = choice.lower()
     if choice == '': return
     else:
+    	#function_list[choice](username,password,closure)
         try: function_list[choice](username,password,closure)
         except KeyError: print("Invalid selection, please try again.\n")
     return
@@ -551,6 +552,7 @@ def getAudioFileList(getVal=True):
 		localDic['files']= setDirPairs(localDic['files'])
 
 
+
 		# Extracting all files from a directory and removing -directory flag
 		localDic['files'] = setDirectoryFiles(localDic['files'])
 
@@ -870,7 +872,7 @@ def get_terminal_size(fallback=(80, 24)):
 
 # Function that loads in the yaml configuration file and sets all variables
 def config():
-	try: stream = open("config.yaml",'r')
+	try: stream = open("config.yml",'r')
 	except: return
 	dic = yaml.load(stream,Loader=yaml.FullLoader)
 	# Configuring CHAT file
@@ -897,9 +899,9 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	config()
-	resizeMax()
+	#resizeMax()
 	interface(args.username,args.password)
-	resizeOriginal(TERMcols,TERMrows)
+	#resizeOriginal(TERMcols,TERMrows)
 
 
 

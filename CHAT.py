@@ -499,7 +499,9 @@ def buildCHAT(infoList):
 	for item in infoList:
 		# Assigning appropriate speaker names and ID's
 		names = []
-		if len(item) == 1: names = ([item[0]['names'][0].upper(),item[0]['names'][1].upper()])
+		if len(item) == 1: 
+			if len(item[0]['names']) == 2: names = ([item[0]['names'][0].upper(),item[0]['names'][1].upper()])
+			elif len(item[0]['names']) == 1: names = ([item[0]['names'][0].upper(),item[0]['names'][0].upper()])
 		elif len(item) == 2: names = ([item[0]['names'][0].upper(),item[1]['names'][0].upper()])
 		speakerID = [names[0][0:3].upper(),names[1][0:3].upper()]
 		if item[0]['audioFile'][:item[0]['audioFile'].find('.')].find('/') == -1:

@@ -21,6 +21,8 @@ import inquirer 								# Selection interface library.
 from prettytable import PrettyTable				# Table printing library
 import copy 		
 import numpy 									# Library to have multi-dimensional homogenous arrays.							# Copying module.
+import yaml
+
 
 # Gailbot scripts
 import CHAT										# Script to produce CHAT files.
@@ -32,6 +34,9 @@ import soundAnalysis 							# Script to analyze different sound characterists.
 
 
 # *** Global variables / invariants. ***
+
+# Hidden meta-data file for auto-post processing.
+metaFileName = ".meta.json"
 
 # post-processing module dictionary
 
@@ -116,6 +121,10 @@ def inquire(modules):
 # Input: Tuple/List containing information.
 def postProcess(infoList):
 	processWrapper(infoList)
+	# Function that creates hidden file for post-processing.
+	addMetaData(infoList)
+
+
 
 # *** Definitions for functions used in the postProcessing actions ***
 
@@ -150,6 +159,28 @@ def processWrapper(infoList):
 			input("\nPress any key to continue...")
 			return
 		else: infoList = action(infoList)
+
+# Function that writes a meta-data file for automatic post-processing.
+def addMetaData(infoList):
+	count = 0
+	for elem in infoList:
+		outDic = {} ; wrapper = {}
+		outDic['jsonFile'] = elem['jsonFile'] ; outDic['names'] = elem['names']
+		outDic['audioFile'] = elem['audioFile']
+		outDic['individualAudioFile'] = elem['individualAudioFile']
+
+		# Deleting existing instance.
+		if not os.path.exists(os.path.join(elem['outputDir'], metaFileName)):
+			with open(os.path.join(elem['outputDir'], metaFileName), 'w') as f:
+				json.dump([],f)
+		# Writing new data
+		with open(os.path.join(elem['outputDir'], metaFileName), 'r') as f: 
+			data = json.load(f)
+		if outDic not in data: data.append(outDic)
+		with open(os.path.join(elem['outputDir'], metaFileName), 'w') as f:
+			json.dump(data,f)
+
+
 
 # Function that assigns speaker names based on the number of speakers
 # Input: Transcribed word List + additional metrics from getJSON
@@ -239,18 +270,18 @@ infoListOriginal = infoList.copy()
 
 # Executes the appropriate function based on user input.
 def exec_menu(choice,function_list):
-    os.system('clear')
-    choice = choice.lower()
-    if choice == '': return
-    else:
-        try: function_list[choice]()
-        except KeyError: print("Invalid selection, please try again.\n")
-    return
+	os.system('clear')
+	choice = choice.lower()
+	if choice == '': return
+	else:
+		try: function_list[choice]()
+		except KeyError: print("Invalid selection, please try again.\n")
+	return
 
 # Function that runs the entire post-processing module as a separate entity.
 def runLocal(username,password,closure):
 	if not local_menu(): return False
-	main_menu()
+	if not main_menu(): return False
 	os.system('clear')
 	postProcess(infoList)
 	print(colored("\nPost-processing completed\n",'green'))
@@ -278,11 +309,12 @@ def local_menu():
 		print(colored("NOTE: For pair files, input the information for both files separately",'red'))
 		print('\nUse options 1 through 4 to configure the post-processing menu:\n')
 		print("1. Add files to process")
-		print(colored("2. Proceed",'green'))
-		print(colored("3. Return to main menu\n",'red'))
+		print("2. Change added files")
+		print(colored("3. Proceed",'green'))
+		print(colored("4. Return to main menu\n",'red'))
 		choice = input(" >>  ")
-		if choice == '2': return True
-		if choice == '3' :
+		if choice == '3': return True
+		if choice == '4' :
 			infoList.clear() ; return False
 		exec_menu(choice,local_actions)
 
@@ -292,25 +324,32 @@ def local_menu():
 def postInput():
 	localDic = {}
 	if not getOutDir(localDic,"outputDir"): return None
-	# Getting a list of all files in the specific directory.
-	dirFiles = fileList(localDic["outputDir"]) ; dirFiles.append("Return")
-	# Getting all remaining inputs
-	if not getJsonFile(localDic,"jsonFile",dirFiles): return None
-	print("Enter " +colored("combined",'red')+ " audio file\nSelect 'Return' to go back to options\n")
-	print(colored("EXAMPLE: pair-0/test2a-test2b-combined.wav\n",'blue'))
-	if not getAudio(localDic,"audioFile",dirFiles): return None
-	if not getNames(localDic,"names"): return None
-	os.system('clear')
-	print("Enter " +colored("individual",'red')+ " audio file\nPress 'Return' to go back to options\n")
-	print(colored("EXAMPLE: pair-0/test2a.wav\n",'blue'))
-	if not getAudio(localDic,"individualAudioFile",dirFiles): return None
-	infoList.append(localDic)
+	# Attempting to retrieve the metadata file for post-processing.
+	if not retrieveMetaData(localDic['outputDir']):
+		if remainingInputs(localDic) == None: return None
 
+
+
+# Function that allows the user to change the already selected files
+# Input: InfoList global variable.
+def modifySelections():
+	global infoList
+	dirList = [] ; localDic = {}
+	for elem in infoList: dirList.append(elem["jsonFile"])
+	dirList.append(colored("Return",'red'))
+	jsonFile = generalInquiry(dirList,"Selection to change") ; 
+	if jsonFile == colored("Return",'red'): return
+	for elem in infoList:
+		if elem["jsonFile"] == jsonFile: 
+			localDic["outputDir"] = elem["outputDir"] ; dic = elem
+	infoList = [elem for elem in infoList if (elem["jsonFile"] != jsonFile)]
+	if remainingInputs(localDic) == None: infoList.append(dic)
 
 # Actions for the main menu
 local_actions = {
 	'1' : postInput,
-	'2' : main_menu,
+	'2' : modifySelections,
+	'3' : main_menu
 }
 
 # *** Helper functions for the local menu ***
@@ -333,7 +372,41 @@ def get_val(dic,key,type):
 					dic[key] = choice
 					return True
 		except ValueError: print("Error: Value must be of type: {}".format(type))
+
+
+# Function that reads metadata file to add fileds automatically for post-processing
+# Returns True of data found and false if not found.
+def retrieveMetaData(outputDir):
+	if os.path.exists(os.path.join(outputDir,metaFileName)):
+		with open(os.path.join(outputDir,metaFileName), 'r') as stream:
+			dicList = json.load(stream)
+			if dicList == None: return False
+			for dic in dicList:
+				dic['outputDir'] = outputDir
+				infoList.append(dic)
+		return True
+	else: return False
 	
+
+# Function that gets the remaining inputs for post-processing
+def remainingInputs(localDic):
+	# Getting a list of all files in the specific directory.
+	dirFiles = fileList(localDic["outputDir"]) ; dirFiles.append(colored("Return",'red'))
+	# Getting all remaining inputs
+	if not getJsonFile(localDic,"jsonFile",dirFiles): return None
+	print("Enter " +colored("combined",'red')+ " audio file\nSelect 'Return' to go back to options\n")
+	print(colored("EXAMPLE: pair-0/test2a-test2b-combined.wav\n",'blue'))
+	if not getAudio(localDic,"audioFile",dirFiles): return None
+	if not getNames(localDic,"names"): return None
+	os.system('clear')
+	print("Enter " +colored("individual",'red')+ " audio file\nPress 'Return' to go back to options\n")
+	print(colored("EXAMPLE: pair-0/test2a.wav\n",'blue'))
+	if not getAudio(localDic,"individualAudioFile",dirFiles): return None
+	infoList.append(localDic)
+	return True
+
+
+
 
 def getOutDir(dic,key):
 	os.system('clear')
@@ -352,8 +425,8 @@ def getJsonFile(dic,key,dirList):
 	print(colored("NOTE: All inputs must be as outputted by Gailbot 0.3.0\n",'red'))
 	print(colored("EXAMPLE: sample1/sample1-json.txt\n",'blue'))
 	while True:
-		jsonFile = generalInquiry(dirList)
-		if jsonFile == 'Return': return False
+		jsonFile = generalInquiry(dirList, "Selected JSON File")
+		if jsonFile == colored("Return",'red'): return False
 		else: dic[key] = dic['outputDir'] + '/' + jsonFile
 		if not os.path.isfile(dic[key]) or not os.path.splitext(dic[key])[1] == ".txt":
 			print(colored("\nERROR: Invalid file. Try again\nSelect 'Return' to go back to options\n",'red'))
@@ -361,15 +434,15 @@ def getJsonFile(dic,key,dirList):
 
 def getNames(dic,key):
 	os.system('clear')
-	print("Enter speaker names (space delimited)\nSelect 'Return' to go back to options\n")
+	print("Enter speaker names (space delimited)\nSelect '0' to go back to options\n")
 	print(colored("EXAMPLES:\nOne speaker: SP1\nTwo Speakers: SP1 SP2\n",'blue'))
 	return get_val(dic,key,list)
 
 def getAudio(dic,key,dirList):
 	print(colored("NOTE: All inputs must be as outputted by Gailbot 0.3.0\n ",'red'))
 	while True:
-		audioFile = generalInquiry(dirList)
-		if audioFile =='Return': return False
+		audioFile = generalInquiry(dirList,"Selected Audio File")
+		if audioFile ==colored("Return",'red'): return False
 		else: dic[key] = dic['outputDir'] + '/' + audioFile
 		if not os.path.isfile(dic[key]):
 			print(colored("\nERROR: Invalid file. Try again\nSelect 'Return' to go back to options\n",'red'))
@@ -382,11 +455,11 @@ def getAudio(dic,key,dirList):
 def fileList(dir):
 	return [file for file in os.listdir(dir) if file[0] != '.']
 
-# General inquiry meny funtion for 
-def generalInquiry(choiceList):
+# General inquiry meny funtion.
+def generalInquiry(choiceList,message):
 	options = [
 			inquirer.List('inputVal',
-				message="Post-processing modules",
+				message=message,
 				choices=choiceList,
 				),
 		]
