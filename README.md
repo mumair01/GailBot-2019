@@ -36,14 +36,16 @@ You should also be aware that Gailbot uses [IBM Watson&#39;s STT API](https://cl
 
 **Installation Steps**
 
+**NOTE: Run these commands in order**
+
 1. Install [Python 3.7](https://www.python.org/downloads/release/python-373/)
 
 2. Install the [Homebrew](https://brew.sh/) packaging software (using their instructions)
 
-3. Install the pip3 package installer:
+3. Install the pip3 package installer by pasting this command in terminal:
 - Brew install python3
 
-4. Run the following commands:
+4. Run the following commands by pasting them in terminal:
 - Brew install ffmpeg
 - Brew remove portaudio
 - Brew install portaudio
@@ -51,10 +53,14 @@ You should also be aware that Gailbot uses [IBM Watson&#39;s STT API](https://cl
 
 5. Download and install the [CLAN editor](http://dali.talkbank.org/clan/) and [CAfont](http://dali.talkbank.org/clan/CAfont.otf) from [Talkbank](https://talkbank.org/software/).
 
-6. Navigate to the Gailbot directory and use the &#39;requirements.txt&#39; file to install all libraries:
+6. Install the Gailbot directory by either:
+- Downloading the [zip file](https://github.com/mumair01/Gailbot-3)
+- Cloning the repository using [git clone](https://www.atlassian.com/git/tutorials/setting-up-a-repository/git-clone) 
+
+7. Navigate to the Gailbot directory and use the &#39;requirements.txt&#39; file to install all libraries:
 - Pip3 install -r requirements.txt
 
-7. Create an account with IBM so you can use Watson&#39;s speech-to-text service
+8. Create an account with IBM so you can use Watson&#39;s speech-to-text service
 - You can sign up for a trial account [here](http://console.bluemix.net/catalog/services/speech-to-text).
 - **NOTE:** Your IBM Bluemix username and password are required to establish a connection with Watson&#39;s Speech to Text service. Once you have registered you can find your credentials [here](ttps://console.us-east.bluemix.net/developer/watson/existing-services).
 - Find transcription pricing [here](https://www.ibm.com/cloud/watson-speech-to-text/pricing).
@@ -119,8 +125,10 @@ A simple breakdown of the process is provided below. A more-detailed technical d
 **STEP 1** : Select all files.
 
 There are multiple ways to add supported files to Gailbot:
+- **NOTE: Exclude square brackets when entering names in Gailbot**
+
 - Add files as an individual file using the name of the file.
-  - Example: Sample.mp3
+  - Example: [Sample.mp3]
 
 - Add two pair files part of the same conversation using the **&#39;-pair&#39;** Note that this flag can be used multiple times in the same instance.
    - **NOTE:** Pair files are files that are conversations recorded with separate audio channels for each speaker.

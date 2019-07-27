@@ -482,6 +482,7 @@ def generalInquiry(choiceList,message):
 				choices=choiceList,
 				),
 		]
+	print(colored("Use arrow keys to navigate\n",'blue'))
 	print(colored("Proceed --> Enter / Return key\n",'green'))
 	return inquirer.prompt(options)['inputVal']
 

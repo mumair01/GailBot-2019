@@ -109,6 +109,7 @@ def inquire(modules):
 	print("\nSelect the post-processing modules to be implemented:\n")
 	print("Select --> Right arrow key")
 	print("Unselect --> Left arrow key")
+	print(colored("Use arrow keys to navigate",'blue'))
 	print(colored("Proceed --> Enter / Return key\n",'green'))
 	modules = inquirer.prompt(options)
 	for key in mapping.keys():
@@ -463,6 +464,7 @@ def generalInquiry(choiceList,message):
 				choices=choiceList,
 				),
 		]
+	print(colored("Use arrow keys to navigate\n",'blue'))
 	print(colored("Proceed --> Enter / Return key\n",'green'))
 	return inquirer.prompt(options)['inputVal']
 

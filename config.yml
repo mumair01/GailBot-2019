@@ -28,7 +28,7 @@ CHAT:
     corpusName: "In_Conversation_Corpus"
     language: "eng"
     speaker1Gender: "male"
-    speaker2Gender: "male"
+    speaker2Gender: "female"
     corpusLocation: "HI_LAB"
     roomLayout: "HI-LAB Duplex"
     situation: "Human Interaction Lab Tufts"
