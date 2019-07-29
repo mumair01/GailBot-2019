@@ -104,9 +104,9 @@ def exec_menu(choice,function_list,username,password,closure):
     choice = choice.lower()
     if choice == '': return
     else:
-    	function_list[choice](username,password,closure)
-       # try: function_list[choice](username,password,closure)
-        #except KeyError: print("Invalid selection, please try again.\n")
+    	#function_list[choice](username,password,closure)
+        try: function_list[choice](username,password,closure)
+        except KeyError: print("Invalid selection, please try again.\n")
     return
 
 # *** Definitions for functions used in the main menu ***	
@@ -152,6 +152,7 @@ def list_base_models(username,password,closure):
 	val = generalInquiry(modelList,colored("Selected base model",'red'))
 	if val == colored('Return','red'): return None
 	output["base-model"] = val[:val.find(':')]
+	output['custom-model'] = None
 
 # Function that provides information for a base model.
 def model_info(username,password,closure):

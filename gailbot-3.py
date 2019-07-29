@@ -763,8 +763,12 @@ def setDirectoryFiles(fileList):
 	newList = [] ; ext = False
 	for file in fileList:
 		if ext:
-			files = [file+'/'+f for f in os.listdir(file) if os.path.isfile(os.path.join(file, f))]
-			newList.extend(files) ; ext = False
+			try: 
+				files = [file+'/'+f for f in os.listdir(file) if os.path.isfile(os.path.join(file, f))]
+				newList.extend(files) ; ext = False
+			except FileNotFoundError:
+				print(colored("\nERROR: Directory not found\n",'red'))
+
 		elif file == '-dir': ext = True
 		else: 
 			if not os.path.isfile(file) and file != '-pair':
