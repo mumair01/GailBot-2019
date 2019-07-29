@@ -132,11 +132,13 @@ def delete_custom(username,password,closure):
 # Function that creates and trians a new custom model.
 def create_custom(username,password,closure):
 	closure = {}
-	try:
-		print("Enter custom model name and description\n"
-			"Press 0 to go back to options\n")
-		name,description = input(" >> ").split() ; os.system('clear')
-	except ValueError: return
+	print("Enter custom model name\nPress 0 to go back to options\n") ;name = input(" >> ")
+	if str(name) == '0': return
+	os.system('clear')
+	print("Enter custom model description\nPress 0 to go back to options\n")
+	description = input(" >> ")
+	if str(description) == '0' : return
+	os.system('clear')
 	customID = create_model(username = username, password = password, name = name, description = description)
 	if customID == None: return
 	closure["customID"] = customID

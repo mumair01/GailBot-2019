@@ -90,7 +90,7 @@ watsonVals = {
 	"token-type" : "Access",
 	"names" : {},
 	"contentType" : {},
-#	"customizationWeight" : 0.5,
+	"customizationWeight" : 0.5,
 	"files" : [],
 	'combinedAudio' : {}
 }
@@ -327,9 +327,13 @@ def record_audio(username,password,closure):
 	# Creating a PyAudio instance
 	audio = pyaudio.PyAudio()
 	# Starting to record
-	stream = audio.open(format=recordingVals['Format'], channels=recordingVals['channels'],
-                    rate=recordingVals['rate'], input=True,
-                    frames_per_buffer=recordingVals['Recording_chunk_size'])
+	try:
+		stream = audio.open(format=recordingVals['Format'], channels=recordingVals['channels'],
+	                    rate=recordingVals['rate'], input=True,
+	                    frames_per_buffer=recordingVals['Recording_chunk_size'])
+	except OSError:
+		print(colored("\nERROR: Invalid recording parameters\n",'red')) ; 
+		input(colored("Press any key to continue",'red')) ; return
 	frames = []
 	for i in range(0, int(recordingVals['rate']/recordingVals['Recording_chunk_size'] * recordingVals['recordSeconds'])):
 		pbar.update(i)
@@ -441,7 +445,7 @@ def modifyNames(username,password,closure):
 def modifyWeight(username,password,closure):
 	print('Specify custom language model customization weight\nPress 0 to go back to options\n')
 	get_val(watsonVals,"customizationWeight",float)
-	if watsonVals['customizationWeight'] < 0 :
+	if watsonVals['customizationWeight'] < 0 or  watsonVals['customizationWeight'] > 1:
 		watsonVals['customizationWeight'] = watsonValsOriginal['customizationWeight']
 
 # Function that allows user to change output directories for files.
