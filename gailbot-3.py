@@ -538,16 +538,23 @@ def getAudioFileList(getVal=True):
 	for k,v in videoFormats.items(): videoTable.add_row([k,v,videoFormatChannels[v]])
 	print(audioTable)
 	print(videoTable)
-	print('\n')
-	print(colored("USAGE:",'red'))
-	print(colored("Transcribe single file using dialogue model --> [Filename]"))
-	print(colored("Transcribe a file pair using the individual speaker model --> '-pair [File-1] [File-2]"))
-	print(colored("Transcribe all directory files with dialogue model --> '-dir [director name]'"))
-	print(colored("Transcribe sub-directories using individual speaker model --> "
-		"'-dirPair [directory name]'\n"))
+	usageTable = PrettyTable()
+	usageTable.title = colored("Usage options",'red')
+	usageTable.field_names = [colored("Option",'blue'),colored('Description','blue')]
+	usageTable.add_row(["\n[Filename]", "\nSingle file using dialogue model"])
+	usageTable.add_row(["\n-pair [File-1] [File-2]", "\nTwo files with individual \nspeakers for "
+		"the same conversation using individual speaker model"])
+	usageTable.add_row(["\n-dir [Directory name]", "\nAll files in a directory using dialogue model"])
+	usageTable.add_row(["\n-dirPair [Directory name]","\nSub-directories within the \nsame directory "
+		"using individual speaker model"])
+	print(usageTable)
+	print(colored("NOTE: File path cannot have back-slash",'red'))
+	print(colored("NOTE: Add spaces between names",'red'))
+	print(colored("NOTE: Exclude square brackets from file and directory names\n",'red'))
+
+
 	while True:
-		print("Enter audio/video file name(s)-"+ colored(" Space delimited",'red'))
-		print(colored("NOTE: File path cannot have '\\ ' .",'red'))
+		print("Enter audio/video file name(s)")
 		print("Press 0 to go back to options\n")
 		localDic = {}
 		if get_val(localDic,'files',list)==None: return
@@ -555,8 +562,6 @@ def getAudioFileList(getVal=True):
 
 		# Extracting '-dirPair' flag files
 		localDic['files']= setDirPairs(localDic['files'])
-
-
 
 		# Extracting all files from a directory and removing -directory flag
 		localDic['files'] = setDirectoryFiles(localDic['files'])
