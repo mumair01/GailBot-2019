@@ -28,7 +28,7 @@ import base64                      # necessary to encode in base64
 #                                  # according to the RFC2045 standard
 import requests                    # python HTTP requests library
 import time 					   # Python timing library
-from termcolor import colored					# Text coloring library
+from termcolor import colored		# Text coloring library
 
 # WebSockets
 from autobahn.twisted.websocket import WebSocketClientProtocol, \

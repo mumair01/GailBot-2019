@@ -57,9 +57,9 @@ import wave
 
 # Progressbar library
 from progressbar import AnimatedMarker, Bar, BouncingBar, Counter, ETA, \
-    AdaptiveETA, FileTransferSpeed, FormatLabel, Percentage, \
-    ProgressBar, ReverseBar, RotatingMarker, \
-    SimpleProgress, Timer, UnknownLength
+	AdaptiveETA, FileTransferSpeed, FormatLabel, Percentage, \
+	ProgressBar, ReverseBar, RotatingMarker, \
+	SimpleProgress, Timer, UnknownLength
 
 
 # *** Global variables / invariants ***
@@ -114,14 +114,14 @@ videoFormats = {"Material-Exchange-Format" : "mxf",
 
  # Number of channels to extract from each video format
 videoFormatChannels = {
- 	"mxf" : 2,
- 	"mov" : 1,
- 	"mp4" : 1,
- 	"wmv" : 1,
- 	"flv" : 1,
- 	"avi" : 1,
- 	"swf" : 1,
- 	"m4v" : 1
+	"mxf" : 2,
+	"mov" : 1,
+	"mp4" : 1,
+	"wmv" : 1,
+	"flv" : 1,
+	"avi" : 1,
+	"swf" : 1,
+	"m4v" : 1
  }
 
 # Recording library formats
@@ -154,14 +154,17 @@ def interface(username,password):
 
 # Executes the appropriate function based on user input.
 def exec_menu(choice,function_list,username,password,closure):
-    os.system('clear')
-    choice = choice.lower()
-    if choice == '': return
-    else:
-    	#function_list[choice](username,password,closure)
-        try: function_list[choice](username,password,closure)
-        except KeyError: print("Invalid selection, please try again.\n")
-    return
+	os.system('clear')
+	choice = choice.lower()
+	if choice == '': return
+	else:
+		#function_list[choice](username,password,closure)
+		try: function_list[choice](username,password,closure)
+		except KeyError: print("Invalid selection, please try again.\n")
+		except KeyboardInterrupt:
+			print(colored("\n\nKeyboard cancellation caught\n",'red'))
+			input(colored("Press any key to return to the main menu...",'red'))
+	return
 
 # Main menu function
 def main_menu(username,password,closure):
@@ -179,7 +182,10 @@ def main_menu(username,password,closure):
 		print("2. Record and transcribe a conversation")
 		print("3. Apply post-processing on existing Gailbot data")
 		print(colored("4. Quit\n",'red'))
-		choice = input(" >>  ")
+		try: choice = input(" >>  ")
+		except KeyboardInterrupt:
+			print(colored("\n\nKeyboard cancelation caught\nExiting...\n",'red'))
+			exit(username,password,{})
 		exec_menu(choice,menu_actions,username,password,closure)
 
 # Audio recording menu function
@@ -308,11 +314,11 @@ def exit(username,password,closure):
 
 # Actions for the main menu
 menu_actions = {
-    'main_menu': main_menu,
-    '1' : transcribe_recorded,
-    '2' : transcribe_new,
-    '3' : postProcessing.runLocal,
-    '4' : exit
+	'main_menu': main_menu,
+	'1' : transcribe_recorded,
+	'2' : transcribe_new,
+	'3' : postProcessing.runLocal,
+	'4' : exit
 }
 
 # *** Definitions for functions used in the recording menu ***
@@ -329,8 +335,8 @@ def record_audio(username,password,closure):
 	# Starting to record
 	try:
 		stream = audio.open(format=recordingVals['Format'], channels=recordingVals['channels'],
-	                    rate=recordingVals['rate'], input=True,
-	                    frames_per_buffer=recordingVals['Recording_chunk_size'])
+						rate=recordingVals['rate'], input=True,
+						frames_per_buffer=recordingVals['Recording_chunk_size'])
 	except OSError:
 		print(colored("\nERROR: Invalid recording parameters\n",'red')) ; 
 		input(colored("Press any key to continue",'red')) ; return
@@ -410,7 +416,7 @@ record_actions = {
 	'4' : modifyRate,
 	'5' : modifyName,
 	'6' : modifyLength,
- 	'7' : recordDefaults,
+	'7' : recordDefaults,
 	'8' : record_audio
 }
 
@@ -865,7 +871,7 @@ def checkBaseModels(acousticBase,languageBase,acousticCustom):
 def resizeMax():
 	os.system('reset')
 	size = ([(screen.frame().size.width, screen.frame().size.height)
-    for screen in AppKit.NSScreen.screens()])
+	for screen in AppKit.NSScreen.screens()])
 	sys.stdout.write("\x1b[8;{rows};{cols}t".format(rows=size[0][1], cols=size[0][0]))
 
 # Function that resizes terminal window to original size
@@ -874,15 +880,15 @@ def resizeOriginal(cols,rows):
 
 # Function that returns the current terminal size.
 def get_terminal_size(fallback=(80, 24)):
-    for i in range(0,3):
-        try:
-            columns, rows = os.get_terminal_size(i)
-        except OSError:
-            continue
-        break
-    else:  # set default if the loop completes which means all failed
-        columns, rows = fallback
-    return columns, rows
+	for i in range(0,3):
+		try:
+			columns, rows = os.get_terminal_size(i)
+		except OSError:
+			continue
+		break
+	else:  # set default if the loop completes which means all failed
+		columns, rows = fallback
+	return columns, rows
 
 # Function that loads in the yaml configuration file and sets all variables
 def config():
