@@ -54,7 +54,7 @@ def analyzeLaugh(infoList):
 		print(colored("\nLaughter analysis unsuccessful",'red'))
 		print("File missing: {}\n".format(modelPath)) ; return infoList
 	for dic in infoList:
-		dic['jsonList'] = segmentLaugh(audioFile= dic['individualAudioFile'],
+		dic['jsonList'] = segmentLaugh(audioFile= dic['outputDir']+"/"+dic['individualAudioFile'],
 			modelPath=modelPath,outputPath=dic['outputDir'],
 			threshold=CHAT.CHATVals['lowerBoundLaughAcceptance'],
 			minLength=CHAT.CHATVals['LowerBoundLaughLength'],

@@ -183,12 +183,12 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 		self.sampleNumber = audioSampleInfo[1]
 		self.sampleName = audioSampleInfo[0]
 		if self.sampleName.find('/') == -1:
-			self.jsonFile = self.dirOutput + "/" +self.sampleName[:self.sampleName.rfind(".")]+"-json.txt"
+			self.jsonFile = self.sampleName[:self.sampleName.rfind(".")]+"-json.txt"
 		else:
 			name = self.sampleName[self.sampleName.rfind('/')+1:]
-			self.jsonFile = self.dirOutput + "/" +name[:name.rfind(".")]+"-json.txt"
+			self.jsonFile = name[:name.rfind(".")]+"-json.txt"
 		# Removing json file data will be written to if it already exists.
-		try : os.remove(self.jsonFile)
+		try : os.remove(self.dirOutput + "/" +self.jsonFile)
 		except OSError : pass
 
 	# Function that deals with the amount of audio sent per message. (Helper function)
@@ -293,8 +293,8 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 		print('Websocket Connection closed:\n\tCode: {0}\n\tReason: {1}\n'
 		'\twasClean: {2}'.format(code,reason,wasClean))
 		# Dumping results to a json file.
-		print("Data dumped: {}".format(self.jsonFile))
-		with open(self.jsonFile,"a") as f: f.write(json.dumps(self.json_output, indent=4,sort_keys=True))
+		print("Data dumped: {}".format(self.dirOutput + "/"+ self.jsonFile))
+		with open(self.dirOutput + "/" +self.jsonFile,"a") as f: f.write(json.dumps(self.json_output, indent=4,sort_keys=True))
 
 		# Adding file info to output information dictionary
 		dic = {"outputDir" : self.dirOutput,

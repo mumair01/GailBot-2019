@@ -158,7 +158,6 @@ def exec_menu(choice,function_list,username,password,closure):
 	choice = choice.lower()
 	if choice == '': return
 	else:
-		#function_list[choice](username,password,closure)
 		try: function_list[choice](username,password,closure)
 		except KeyError: print("Invalid selection, please try again.\n")
 		except KeyboardInterrupt:
@@ -653,10 +652,10 @@ def sendRequest(username,password,closure):
 		copyFile(dic['audioFile'],dic['outputDir']+'/')
 		# Adding individual file path and name
 		if dic['audioFile'].find('/') == -1:
-			dic['individualAudioFile'] =dic['outputDir']+'/'+ dic['audioFile']
+			dic['individualAudioFile'] = dic['audioFile']
 		else:
 			names = dic['audioFile'][dic['audioFile'].rfind('/')+1:]
-			dic['individualAudioFile'] =dic['outputDir']+'/'+ names
+			dic['individualAudioFile'] = names
 		if dic['audioFile'] in watsonVals['combinedAudio'].keys():
 			dic['audioFile'] = watsonVals['combinedAudio'][dic['audioFile']]
 		# Copying audiofiles to output directory
@@ -798,13 +797,13 @@ def setDirPairs(fileList):
 	for file in fileList:
 		if ext:
 			if not os.path.exists(file): 
-				print(colored("\nERROR: Not found: {}".format(file),'red')) ; continue 
+				print(colored("\nERROR: Not found: {}\n".format(file),'red')) ; continue 
 			subDirs = [direct for direct in os.listdir(file) if os.path.isdir(os.path.join(file,direct))]
 			for direct in subDirs:
 				x = os.listdir(os.path.join(file,direct))
 				dirFiles = [file for file in x if file[0] != '.']
-				if len(dirFiles) != 2: print(colored("ERROR: Sub-directory does not have two pair files:"
-					" {}".format(direct),'red'))
+				if len(dirFiles) != 2: print(colored("\nERROR: Sub-directory does not have two pair files:"
+					" {}\n".format(direct),'red'))
 				else:
 					files = dirFiles
 					newList.extend(['-pair',os.path.join(file+"/"+direct,files[0]),

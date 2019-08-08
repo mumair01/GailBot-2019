@@ -54,7 +54,7 @@ def analyzeSyllableRate(infoList):
 	infoListCopy = constructTurn(infoListCopy)
 	print(colored("\nAnalyzing syllable rate...\n",'blue'))
 	for dic in infoListCopy:
-		print("Loading file: {0}".format(dic['jsonFile']))
+		print("Loading file: {0}".format(dic['outputDir']+"/"+dic['jsonFile']))
 		# Finding the syllable rate.
 		dictionaryList = findSyllables(dic['jsonListTurns'])
 		# Getting stats values.

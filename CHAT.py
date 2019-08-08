@@ -311,7 +311,7 @@ vals_actions = {
 def formatCHAT(infoList):
 	print(colored("\nGenerating CHAT/CA file(s)\n",'blue'))
 	for infoDic in infoList:
-		print("Loading file: {}".format(infoDic['jsonFile']))
+		print("Loading file: {}".format(infoDic['outputDir']+"/"+infoDic['jsonFile']))
 	for action in CHAT_actions.values(): 
 		infoList = action(infoList)
 		if len(infoList) == 0: return infoList

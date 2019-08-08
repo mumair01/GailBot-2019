@@ -44,21 +44,21 @@ metaFileName = ".meta.json"
 postModulesStatus = {
 	"syllRate": colored("Selected",'green'),
 	"laughter" : colored("Selected",'green'),
-	"sound" : colored("Selected",'green')
+	#"sound" : colored("Selected",'green')
 }
 
 # Mapping between display name and key name
 mapping = {
 	"Syllable rate module" : "syllRate",
 	"Laughter detection module" : "laughter",
-	"Sound analysis module" : "sound"
+	#"Sound analysis module" : "sound"
 }
 
 # Mapping between key name and appropriate post-processing function
 funcMapping = {
 	"syllRate" : rateAnalysis.analyzeSyllableRate,	
 	"laughter" : laughAnalysis.analyzeLaugh,
-	"sound" : soundAnalysis.analyzeSound
+	#"sound" : soundAnalysis.analyzeSound
 }
 
 # Mapping between a function to the local menu 
@@ -83,7 +83,7 @@ def main_menu():
 		x.field_names = [colored("Module",'blue'),colored("Status",'blue')]
 		x.add_row(["Syllable rate module",postModulesStatus['syllRate']])
 		x.add_row(["Laughter detection module",postModulesStatus['laughter']])
-		x.add_row(["Sound analysis module",postModulesStatus['sound']])
+		#x.add_row(["Sound analysis module",postModulesStatus['sound']])
 		print(x)
 		print("\nUse options 1 through 2 to select the post-processing modules " 
 			"to be implemented:")
@@ -102,8 +102,8 @@ def inquire(modules):
 			inquirer.Checkbox('postModules',
 				message="Post-processing modules",
 				choices=["Syllable rate module",
-				"Laughter detection module",
-				"Sound analysis module"],
+				"Laughter detection module"],
+				#"Sound analysis module"],
 				),
 		]
 	print("\nSelect the post-processing modules to be implemented:\n")
@@ -136,7 +136,7 @@ def jsonToCSV(infoList):
 		# Getting relevant data list.
 		jsonList = getJSON(infoDic)
 		# Writing to CSV file.
-		filename = infoDic['jsonFile'][:infoDic['jsonFile'].find('-json')]+".csv"
+		filename = infoDic['outputDir'] +"/"+ infoDic['jsonFile'][:infoDic['jsonFile'].find('-json')]+".csv"
 		jsonList.insert(0,CSVfields)
 		writer = csv.writer(open(filename, 'w'))
 		writer.writerows(jsonList)
@@ -201,9 +201,9 @@ def getJSON(infoDic):
 	jsonList = []
 	labels = {}
 	try:
-		with open(infoDic['jsonFile']) as f: jsonObject = json.load(f)
+		with open(infoDic['outputDir'] +"/"+ infoDic['jsonFile']) as f: jsonObject = json.load(f)
 	except FileNotFoundError:
-		print(colored("\nERROR: File not found: {}".format(infoDic['jsonFile']),'red'))
+		print(colored("\nERROR: File not found: {}".format(infoDic['outputDir'] +"/"+ infoDic['jsonFile']),'red'))
 		return []
 	for res in jsonObject:
 		if "speaker_labels" not in res:
@@ -238,7 +238,7 @@ def getJSON(infoDic):
 
 #  *** List of functions to implement ***
 processingActions = [jsonToCSV,rateAnalysis.analyzeSyllableRate,
-		laughAnalysis.analyzeLaugh,soundAnalysis.analyzeSound,
+		laughAnalysis.analyzeLaugh,#soundAnalysis.analyzeSound,
 		CHAT.formatCHAT]
 
 # List of functions to implement
