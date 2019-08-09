@@ -567,7 +567,7 @@ def getAudioFileList(getVal=True):
 
 		# Extracting '-dirPair' flag files
 		localDic['files']= setDirPairs(localDic['files'])
-
+		
 		# Extracting all files from a directory and removing -directory flag
 		localDic['files'] = setDirectoryFiles(localDic['files'])
 
