@@ -785,8 +785,8 @@ def setDirectoryFiles(fileList):
 				print(colored("\nERROR: File does not exist",'red')) ; return []
 			newList.append(file)
 	# Ensuring files are supported.
-	newList = [file for file in newList if file[file.rfind('.')+1:] in videoFormats.values()
-			or  file[file.rfind('.')+1:] in audioFormatMapping.values()or file == '-pair']
+	newList = [file for file in newList if file[file.rfind('.')+1:].lower() in videoFormats.values()
+			or  file[file.rfind('.')+1:].lower() in audioFormatMapping.values()or file == '-pair']
 	return newList
 
 # Function that extracts the files from the sub-folders in a folder and sets them
