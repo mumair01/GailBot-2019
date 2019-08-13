@@ -428,8 +428,8 @@ def getJsonFile(dic,key,dirList):
 	while True:
 		jsonFile = generalInquiry(dirList, "Selected JSON File")
 		if jsonFile == colored("Return",'red'): return False
-		else: dic[key] = dic['outputDir'] + '/' + jsonFile
-		if not os.path.isfile(dic[key]) or not os.path.splitext(dic[key])[1] == ".txt":
+		else: dic[key] = jsonFile
+		if not os.path.isfile(dic['outputDir'] +"/"+ dic[key]) or not os.path.splitext(dic[key])[1] == ".txt":
 			print(colored("\nERROR: Invalid file. Try again\nSelect 'Return' to go back to options\n",'red'))
 		else: os.system('clear') ; return True
 
@@ -444,8 +444,8 @@ def getAudio(dic,key,dirList):
 	while True:
 		audioFile = generalInquiry(dirList,"Selected Audio File")
 		if audioFile ==colored("Return",'red'): return False
-		else: dic[key] = dic['outputDir'] + '/' + audioFile
-		if not os.path.isfile(dic[key]):
+		else: dic[key] =  audioFile
+		if not os.path.isfile(dic['outputDir'] +"/"+dic[key]):
 			print(colored("\nERROR: Invalid file. Try again\nSelect 'Return' to go back to options\n",'red'))
 		else: os.system('clear') ; return True
 
