@@ -208,21 +208,23 @@ def getJSON(infoDic):
 	for res in jsonObject:
 		if "speaker_labels" not in res:
 			# Extracting main fields
-			processingMetrics = res['processing_metrics']
-			resultIndex = res['result_index'];results = res['results']
-			final = results[0]['final'];wordData = results[0]['alternatives'][0]
-			# Extracting data to be written to file.
-			periodic = processingMetrics['periodic']
-			recieved = processingMetrics['processed_audio']['received']
-			confidenceVals = wordData['word_confidence'];words = wordData['timestamps']
-			# Writing row per word.
-			if final:
-				for word,confidence in itertools.zip_longest(words,confidenceVals):
-						# Extracting transcript and timing
-						trans = word[0];startTime = word[1]
-						endTime = word[2];confVal = confidence[1]
-						jsonList.append([startTime,endTime,trans,confVal,
-							periodic,recieved,resultIndex])
+			try:
+				processingMetrics = res['processing_metrics']
+				resultIndex = res['result_index'];results = res['results']
+				final = results[0]['final'];wordData = results[0]['alternatives'][0]
+				# Extracting data to be written to file.
+				periodic = processingMetrics['periodic']
+				recieved = processingMetrics['processed_audio']['received']
+				confidenceVals = wordData['word_confidence'];words = wordData['timestamps']
+				# Writing row per word.
+				if final:
+					for word,confidence in itertools.zip_longest(words,confidenceVals):
+							# Extracting transcript and timing
+							trans = word[0];startTime = word[1]
+							endTime = word[2];confVal = confidence[1]
+							jsonList.append([startTime,endTime,trans,confVal,
+								periodic,recieved,resultIndex])
+			except KeyError: continue
 		else:
 			speakerLabels = res['speaker_labels']
 			for label in speakerLabels: labels.update({label['from']:label['speaker']})
