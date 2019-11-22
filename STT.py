@@ -41,6 +41,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Invariants / Global variables
 
+#IBM_host = "gateway-wdc.watsonplatform.net"		# Use this host is username is apikey
 IBM_host = "stream.watsonplatform.net"				# Name of the IBM host / service.
 STT_service = "speech-to-text"						# Speech to Text service name.
 IDModels = ["en-US_BroadbandModel",  				# Base models that return speaker ID's
