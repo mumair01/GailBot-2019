@@ -41,7 +41,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Invariants / Global variables
 
-#IBM_host = "gateway-wdc.watsonplatform.net"		# Use this host is username is apikey
+IBM_host_apiKey = "gateway-wdc.watsonplatform.net"	# Use this host is username is apikey
 IBM_host = "stream.watsonplatform.net"				# Name of the IBM host / service.
 STT_service = "speech-to-text"						# Speech to Text service name.
 IDModels = ["en-US_BroadbandModel",  				# Base models that return speaker ID's
@@ -369,6 +369,10 @@ def run(username,password,out_dir,base_model,acoustic_id,language_id,
 
 	# Removing files that do not exist
 	audio_files = verifyFiles(audio_files)
+
+	# Changing IBM host if using APIkey
+	if username == 'apikey': global IBM_host ; IBM_host = IBM_host_apiKey
+
 
 	# Checking parameters for correctness (Checked runtime Errors)
 	for k,v in out_dir.items():

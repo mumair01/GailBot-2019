@@ -31,6 +31,10 @@ import inquirer 								# Selection interface library.
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 # Global variables / invariants.
+IBM_host_apiKey = "gateway-wdc.watsonplatform.net"	# Use this host is username is apikey
+IBM_host = "stream.watsonplatform.net"				# Name of the IBM host / service.
+
+
 base_model = "en-US_BroadbandModel"							# Default base model
 headers = {'Content-Type' : "application/json"}				# Type of API data
 customization_id_length = 36								# Length of custom ID
@@ -40,6 +44,7 @@ output = {"base-model": base_model, "custom-model" : None}	# Output for the scri
 
 # User interface function
 def interface(username,password):
+	if username == 'apikey': global IBM_host ; IBM_host = IBM_host_apiKey
 	main_menu(username,password,{})
 	return output
 
@@ -195,14 +200,14 @@ menu_actions = {
 
 # Function that returns a list of all available custom models
 def get_model_list(username,password):
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations"
+	uri = "https://{}/speech-to-text/api/v1/customizations".format(IBM_host)
 	r = requests.get(uri, auth=(username,password), verify=False, headers=headers)
 	return json.loads(r.text)
 
 # Function that deletes the model corresponding to the given model ID.
 def delete_model(username,password,customID):
 	print("\nDeleting custom model...")
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations/"+customID
+	uri = "https://{}/speech-to-text/api/v1/customizations/".format(IBM_host)+customID
 	r = requests.delete(uri, auth=(username,password), verify=False, headers=headers)
 	respJson = r.json()
 	if 'code' in respJson and respJson['code'] == 409: print(colored(respJson['error'],'red')) 
@@ -217,7 +222,7 @@ def create_model(username,password, description,name):
 	else: trainBase = val[:val.find(":")]
 	print(colored("\nCreating custom language model...",'blue'))
 	data = {"name" : name, "base_model_name" : trainBase, "description" : description}
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations"
+	uri = "https://{}/speech-to-text/api/v1/customizations".format(IBM_host)
 	jsonObject = json.dumps(data).encode('utf-8')
 	resp = requests.post(uri, auth=(username,password), verify=False, headers=headers, data=jsonObject)
 
@@ -234,14 +239,14 @@ def create_model(username,password, description,name):
 
 # Function that lists all the base models available within the API.
 def list_models(username,password):
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/models"
+	uri = "https://{}/speech-to-text/api/v1/models".format(IBM_host)
 	r = requests.get(uri, auth=(username,password), verify=False, headers=headers)
 	respJson = r.json()
 	return respJson["models"]
 
 # Function that gets information for a specific base model
 def get_basemodel_info(username,password,modelinfo):
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/models/"+modelinfo
+	uri = "https://{}/speech-to-text/api/v1/models/".format(IBM_host) +modelinfo
 	r = requests.get(uri, auth=(username,password), verify=False, headers=headers)
 	respJson = r.json()
 	print("List models returns: ", r.status_code)
@@ -253,7 +258,7 @@ def add_corpus(username, password, filename,customID):
 	corpus_name = filename[:filename.rfind(".")]
 
 	print("\nAdding corpus file...")
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations/"+customID+"/corpora/"+corpus_name
+	uri = "https://{}/speech-to-text/api/v1/customizations/"+customID+"/corpora/".format(IBM_host) +corpus_name
 	with open(corpus_file, 'rb') as f:
 	   r = requests.post(uri, auth=(username,password), verify=False, headers=headers, data=f)
 
@@ -266,7 +271,7 @@ def add_corpus(username, password, filename,customID):
 # Function that trains the model with the input data provided.
 def train_model(username,password,customID):
 	print(colored("\nTraining custom model...\n",'blue'))
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations/"+customID+"/train"
+	uri = "https://{}/speech-to-text/api/v1/customizations/".format(IBM_host) +customID+"/train"
 	data = {}
 	jsonObject = json.dumps(data).encode('utf-8')
 	r = requests.post(uri, auth=(username,password), verify=False, data=jsonObject)
@@ -278,7 +283,7 @@ def train_model(username,password,customID):
 		return
 
 
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations/"+customID
+	uri = "https://{}/speech-to-text/api/v1/customizations/".format(IBM_host) +customID
 	r = requests.get(uri, auth=(username,password), verify=False, headers=headers)
 	respJson = r.json()
 	status = respJson['status']
@@ -306,7 +311,7 @@ def add_word(username,password,word,sounds_like,display_as,customID):
 	data = {"sounds_like" : [sounds_like], "display_as" : display_as}
 	wordToAdd = word
 	u = wordToAdd
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations/"+customID+"/words/"+u
+	uri = "https://{}/speech-to-text/api/v1/customizations/".format(IBM_host) +customID+"/words/"+u
 	jsonObject = json.dumps(data).encode('utf-8')
 	r = requests.put(uri, auth=(username,password), verify=False, headers=headers, data=jsonObject)
 
@@ -318,14 +323,14 @@ def add_multiple_words(username,password,interim_data,customID):
 	print(colored("\nAdding multiple words...\n",'blue'))
 	print(interim_data)
 	data = {"words": interim_data}
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations/"+customID+"/words"
+	uri = "https://{}/speech-to-text/api/v1/customizations/".format(IBM_host) +customID+"/words"
 	jsonObject = json.dumps(data).encode('utf-8')
 	r = requests.post(uri, auth=(username,password), verify=False, headers=headers, data=jsonObject)
 
 	print("\nAdding multiple words returns: ", r.status_code)
 
 	# Get status of model - only continue to training if 'ready'
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations/"+customID
+	uri = "https://{}/speech-to-text/api/v1/customizations/".format(IBM_host) +customID
 	r = requests.get(uri, auth=(username,password), verify=False, headers=headers)
 	respJson = r.json()
 	status = respJson['status']
@@ -345,7 +350,7 @@ def add_multiple_words(username,password,interim_data,customID):
 def list_custom(username,password,customID):
 	os.system('clear')
 	print(colored("Listing custom words...",'blue'))
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations/{}/words?sort=%2Balphabetical".format(customID)
+	uri = "https://{0}/speech-to-text/api/v1/customizations/{1}/words?sort=%2Balphabetical".format(IBM_host,customID)
 	r = requests.get(uri, auth=(username,password), verify=False, headers=headers)
 	if r.status_code == 200: print(r.text)
 	else : print(colored("\nUnable to list custom word information",'red'))
@@ -354,7 +359,7 @@ def list_custom(username,password,customID):
 def list_corpora(username,password,customID):
 	os.system('clear')
 	print(colored("Listing corpora information for custom model...",'blue'))
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations/{}/corpora".format(customID)
+	uri = "https://{0}/speech-to-text/api/v1/customizations/{1}/corpora".format(IBM_host,customID)
 	r = requests.get(uri, auth=(username,password), verify=False, headers=headers)
 	if r.status_code == 200: print(r.text)
 	else : print(colored("\nUnable to list corpora information",'red'))
@@ -362,7 +367,7 @@ def list_corpora(username,password,customID):
 # Function that upgrades the base model of the given custom model
 def upgrade_base_model(username,password,customID):
 	print(colored("Upgrading base model...",'blue'))
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations/{}/upgrade_model".format(customID)
+	uri = "https://{0}/speech-to-text/api/v1/customizations/{1}/upgrade_model".format(IBM_host,customID)
 	r = requests.post(uri, auth=(username,password), verify=False, headers=headers)
 	if r.status_code == 200: print("Base model successfully upgraded")
 	else: print(colored("\nBase model failed to upgrade",'red'))
@@ -370,7 +375,7 @@ def upgrade_base_model(username,password,customID):
 # Function that resets the training of the given custom model.
 def reset_model(username,password,customID):
 	print(colored("Resetting custom model...",'blue'))
-	uri = "https://stream.watsonplatform.net/speech-to-text/api/v1/customizations/{}/reset".format(customID)
+	uri = "https://{0}/speech-to-text/api/v1/customizations/{1}/reset".format(IBM_host,customID)
 	r = requests.post(uri, auth=(username,password), verify=False, headers=headers)
 	if r.status_code == 200: print("Model successfully reset")
 	else: print(colored("\nModel failed to reset",'red'))
