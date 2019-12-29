@@ -31,7 +31,6 @@ import inquirer 								# Selection interface library.
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 # Global variables / invariants.
-IBM_host_apiKey = "gateway-wdc.watsonplatform.net"	# Use this host is username is apikey
 IBM_host = "stream.watsonplatform.net"				# Name of the IBM host / service.
 
 
@@ -42,9 +41,21 @@ original = {"base-model": base_model, "custom-model" : None} # Default model val
 output = {"base-model": base_model, "custom-model" : None}	# Output for the script.
 
 
+# Map from region to service host url
+REGION_MAP = {
+    'us-east': 'gateway-wdc.watsonplatform.net',
+    'us-south': 'stream.watsonplatform.net',
+    'eu-gb': 'stream.watsonplatform.net',
+    'eu-de': 'stream-fra.watsonplatform.net',
+    'au-syd': 'gateway-syd.watsonplatform.net',
+    'jp-tok': 'gateway-syd.watsonplatform.net',
+}
+
+
 # User interface function
-def interface(username,password):
-	if username == 'apikey': global IBM_host ; IBM_host = IBM_host_apiKey
+def interface(username,password,IBM_host_region):
+	global IBM_host
+	IBM_host = REGION_MAP[IBM_host_region]
 	main_menu(username,password,{})
 	return output
 
