@@ -69,8 +69,11 @@ You should also be aware that Gailbot uses [IBM Watson&#39;s STT API](https://cl
 
 Gailbot can be executed using the following command from inside the Gailbot directory:
 
-- Python3 gailbot-3.py -username [IBM Bluemix Username] -password [IBM Bluemix Password]
+- Python3 gailbot-3.py -username [IBM Bluemix Username] -password [IBM Bluemix Password] -region [region]
 
+- **NOTE**: The appropriate region for a user can be determined using the url provided
+by the resource list alongside user credentials. Additionally, the location may be determined
+[here](https://cloud.ibm.com/docs/containers?topic=containers-regions-and-zones). 
 
 
 Gailbot can be used to perform three primary functions:
