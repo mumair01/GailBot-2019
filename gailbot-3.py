@@ -12,6 +12,15 @@
 
 	Initial development: 5/30/19	
 
+	CHANGELOG:
+	1. 12/29/19
+		IBM Watson changed their api such that the url required would 
+		be based on the region and authentication and connections
+		would be using apikeys. As such, added a region_map with the 
+		appropriateurl for each region. 
+		Additionally, Gailbot now needs an additional -region parameter
+		based on the user's region.
+
 '''
 
 # Libraries to build standalone executable.
@@ -147,8 +156,10 @@ TERMrows = 30
 # ***********************
 
 # User interface function
-def interface(username,password):
-	main_menu(username,password,{})
+def interface(username,password,**kwargs):
+	closure = {'region' : kwargs['region'],
+			'watsonDefaults' : False}
+	main_menu(username,password,closure)
 
 # *** Menu function definitions ***
 
@@ -168,6 +179,7 @@ def exec_menu(choice,function_list,username,password,closure):
 # Main menu function
 def main_menu(username,password,closure):
 	while True:
+		closure['watsonDefaults'] = False
 		watsonDefaults(username,password,closure)
 		recordDefaults(username,password,closure)
 		os.system('clear')
@@ -258,7 +270,8 @@ def request_menu(username,password,closure):
 		choice = input(" >>  ")
 		if choice == '9' : return False
 		if choice == '8' : return True
-		exec_menu(choice,request_actions,username,password,True)				# Passing True to reset value.
+		closure['watsonDefaults'] = True
+		exec_menu(choice,request_actions,username,password,closure)				# Passing True to reset value.
 		if len(watsonVals['files']) == 0 : return False
 
 
@@ -294,7 +307,7 @@ def transcribe_new(username,password,closure):
 
 # Function that transcribes a pre-recorded conversation
 def transcribe_recorded(username,password,closure):
-	if getAudioFileList() == None: return
+	if getAudioFileList(True) == None: return
 
 	# Selecting post-processing modules to be implemented
 	if not postProcessing.main_menu(): return
@@ -423,13 +436,13 @@ record_actions = {
 
 # Function that modifies the custom language model.
 def modifyLangModel(username,password,closure):
-	output = language_model.interface(username,password)
+	output = language_model.interface(username,password,closure['region'])
 	watsonVals['base-model'] = output['base-model']
 	watsonVals['custom-id'] = output['custom-model']
 
 # Function that modifies the custom acoustic model.
 def modifyAcoustModel(username,password,closure):
-	output = acoustic_model.interface(username,password)
+	output = acoustic_model.interface(username,password,closure['region'])
 	watsonVals['acoustic-id'] = output['acoustic-model']
 
 # Function that modifies the X-Watson-Learning parameter.
@@ -497,7 +510,7 @@ def watsonDefaults(username,password,closure):
 	#input('Values reset!\nPress any key to return to menu...\n')
 	os.system('clear')
 	# Getting new audio file names before returning to main menu 
-	getAudioFileList(closure)			
+	getAudioFileList(closure['watsonDefaults'])			
 
 
 # Actions for the request menu
@@ -639,7 +652,8 @@ def sendRequest(username,password,closure):
 		audio_files=watsonVals['files'],names=watsonVals['names'],combined_audio = '',
 		contentType=watsonVals['contentType'],num_threads = len(watsonVals['files']),
 		customization_weight = watsonVals['customizationWeight'],
-		out_dir=watsonVals['output-directory'],opt_out = watsonVals['opt-out'])
+		out_dir=watsonVals['output-directory'],opt_out = watsonVals['opt-out'],
+		region = closure['region'])
 	# Removing unprocessed files.
 	for dic in outputInfo:
 		if dic['delete'] : 
@@ -666,7 +680,8 @@ def sendRequest(username,password,closure):
 	while not deleteQueue.empty(): os.remove(deleteQueue.get_nowait())
 	input("\nRequest Processed\nPress any key to continue")
 	# Restoring defaults after request
-	watsonDefaults(username,password,False)
+	closure['watsonDefaults'] = False
+	watsonDefaults(username,password,closure)
 	recordDefaults(username,password,closure)
 	time.sleep(0.5)
 	# Preventing the reactor from restarting.
@@ -915,11 +930,14 @@ if __name__ == '__main__':
 	parser.add_argument(
 		'-password', action = 'store', dest = 'password',
 		help = 'IBM bluemix password', required = True)
+	parser.add_argument(
+		'-region',action = 'store',dest = 'region',
+		help = 'Service endpoint region', required = True)
 	args = parser.parse_args()
 
 	config()
 	resizeMax()
-	interface(args.username,args.password)
+	interface(args.username,args.password,region = args.region)
 	resizeOriginal(TERMcols,TERMrows)
 
 
