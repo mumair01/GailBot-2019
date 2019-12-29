@@ -41,7 +41,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Invariants / Global variables
 
-IBM_host = "stream.watsonplatform.net"				# Name of the IBM host / service. us-south by default
+IBM_host_apiKey = "gateway-wdc.watsonplatform.net"	# Use this host is username is apikey
+IBM_host = "stream.watsonplatform.net"				# Name of the IBM host / service.
 STT_service = "speech-to-text"						# Speech to Text service name.
 IDModels = ["en-US_BroadbandModel",  				# Base models that return speaker ID's
 			"en-US_ShortForm_NarrowbandModel",
@@ -57,15 +58,6 @@ Audio_chunk_size_bytes = 2000						# Size of Audio Sample that can be sent to Wa
 outputInfo = []
 
 
-# Map from region to service host url
-REGION_MAP = {
-    'us-east': 'gateway-wdc.watsonplatform.net',
-    'us-south': 'stream.watsonplatform.net',
-    'eu-gb': 'stream.watsonplatform.net',
-    'eu-de': 'stream-fra.watsonplatform.net',
-    'au-syd': 'gateway-syd.watsonplatform.net',
-    'jp-tok': 'gateway-syd.watsonplatform.net',
-}
 
 # Utility class for communicating for Watson's STT API.
 class Utilities:
@@ -265,7 +257,6 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 		# Parsing the json string returned by service.
 		jsonObject = json.loads(payload.decode('utf8'))
 
-
 		# Initial / final server response for a new connection
 		if 'state' in jsonObject:
 			self.listening_state_count +=1
@@ -276,12 +267,6 @@ class WSInterfaceProtocol(WebSocketClientProtocol):
 			if self.listening_state_count == 2: self.sendClose(1000)
 		# Recieving results from service
 		elif 'results' in jsonObject:
-			# Return if all the length of the audio has been seen by the engine
-			if 'processing_metrics' in jsonObject['results'][0]:
-				r = jsonObject['results'][0]['processing_metrics']['processed_audio']['received']
-				s = jsonObject['results'][0]['processing_metrics']['processed_audio']['seen_by_engine']
-				if float(r) == float(s):
-					return
 			# Empty transcription
 			if len(jsonObject['results']) == 0: print("Empty transcipt returned")
 			# Normal transcript
@@ -377,13 +362,16 @@ def verifyFiles(audio_files):
 # ]
 def run(username,password,out_dir,base_model,acoustic_id,language_id,
 	num_threads,opt_out,watson_token,audio_files,names,combined_audio,
-	contentType,customization_weight,region):
+	contentType,customization_weight):
 
 	sys.stderr.close()	# Suppressing error messages from the WebSocket library (Internal library bugs)
 	print(colored("Initiating transcription process..\n",'blue'))
 
 	# Removing files that do not exist
 	audio_files = verifyFiles(audio_files)
+
+	# Changing IBM host if using APIkey
+	if username == 'apikey': global IBM_host ; IBM_host = IBM_host_apiKey
 
 
 	# Checking parameters for correctness (Checked runtime Errors)
@@ -396,9 +384,6 @@ def run(username,password,out_dir,base_model,acoustic_id,language_id,
 
 	# Initializing Headers passed to Watson STT as part of request.
 	headers = {opt_out_key : '1'} if opt_out else {}
-
-	# Setting the IBM_HOST based on the Region
-	IBM_HOST = REGION_MAP[region]
 
 	# Authenticating using Watson tokens.
 	if watson_token == 1:
