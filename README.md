@@ -76,6 +76,8 @@ by the resource list alongside user credentials. Additionally, the location may 
 [here](https://cloud.ibm.com/docs/containers?topic=containers-regions-and-zones). 
 
 
+
+
 Gailbot can be used to perform three primary functions:
 
 1. Transcribe an existing video or audio file.
