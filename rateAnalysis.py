@@ -9,12 +9,26 @@
 		Human Interaction Lab at Tufts
 
 	Initial development: 6/17/19
+
+
+	CHANGELOG:
+
+	- 1/28/2020
+		-- Changes made by --> Muhammad Umair
+		-- Changes made --> Changed the numColons algorithm such that 
+							the syllRateDiff is difference between
+							the current syllable rate and the median,
+							which is divided by MAD to find the number 
+							of colons.
+		-- Previous --> Previously, syllRateDiff wsa difference between
+						syllRate and MAD, which then divided MAD.
+
 '''
 
 
 import os, sys
-#import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
-#import librosa.display 						# Library to display signal.
+import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
+import librosa.display 						# Library to display signal.
 import numpy 									# Library to have multi-dimensional homogenous arrays.
 from big_phoney import BigPhoney				# Finds the syllables per word.
 from statsmodels import robust 					# Statistics library.
@@ -63,7 +77,7 @@ def analyzeSyllableRate(infoList):
 		# Adds delims to individual word jsonList.
 		dic['jsonList'] = addDelims(dictionaryList,statsDic,dic['jsonList'])
 		# Visuzlizing the data.
-		#  ** visualize(dictionaryList)
+		# ** visualize(dictionaryList)
 	for dicCopy,dic in zip(infoListCopy,infoList):
 		# Adding Hesitation markers back.
 		dic['jsonList'] = addHesitation(dicCopy,dic)
@@ -111,7 +125,7 @@ def addDelims(dictionaryList,statsDic,jsonList):
 			# For one word, adding colons to trailing vowel.
 			if len(elem['elem'][3].split())==1 and any(char in vowels for char in elem['elem'][3]):
 				pos = lastVowelPos(elem['elem'][3])
-				colons = numColons(statsDic['medianAbsDev'],elem['syllRate'])
+				colons = numColons(statsDic['medianAbsDev'],elem['syllRate'], statsDic['median'])
 				elem['elem'][3] = elem['elem'][3][:pos+1] + (":"*colons) + elem['elem'][3][pos+1:]
 			else:
 				elem['elem'][3] = delims['slowSpeech'] + elem['elem'][3] + delims['slowSpeech']
@@ -157,14 +171,18 @@ def lastVowelPos(string):
 # speech marker.
 # Input: Median absolute deviation for the syllable rate, Syllable rate of turn.
 # Output: The number of colons to be added.
-def numColons(syllRateMAD, syllRateTurn):
-	syllRateDiff = abs(syllRateTurn - syllRateMAD)
+def numColons(syllRateMAD, syllRateTurn,median):
+	print("IN NUM COLONS")
+	print(syllRateMAD,syllRateTurn)
+	syllRateDiff = abs(syllRateTurn - median)
 	# Handling case where difference is 0 i.e. denominator cannot be 0.
 	if syllRateDiff == 0: syllRateDiff = 0.1
-	colons = int(round(syllRateMAD / syllRateDiff))
+	colons = int(round(syllRateDiff/ syllRateMAD))
+	print("syllRateDiff/ syllRateMAD", syllRateDiff/ syllRateMAD)
+	print(colons)
 	return colons
 
-'''
+
 
 # Function that visualizes the syllable rate to verify predictions
 def visualize(dictionaryList):
@@ -176,11 +194,13 @@ def visualize(dictionaryList):
 	median_absolute_deviation = round(robust.mad(allRates),2)
 	lowerLimit = (median-(LimitDeviations*median_absolute_deviation))
 	upperLimit = (median+(LimitDeviations*median_absolute_deviation))
-	print(allRates)
-	print(median)
-	print(median_absolute_deviation)
-	print(lowerLimit)
-	print(upperLimit)
+	print("Syllable rate per turn\n")
+	for turnRate in allRates:
+		print(turnRate)
+	print("Median syllable rate {}".format(median))
+	print("Median absolute deviation {}".format(median_absolute_deviation))
+	print("Lower threshold {}".format(lowerLimit))
+	print("Upper threshold {}".format(upperLimit))
 	plt.figure(figsize=(10, 4))
 	plt.hist(allRates,bins=14,color='c', edgecolor='k')
 	plt.axvline(median,color='k', linestyle='dashed', linewidth=1)
@@ -188,7 +208,6 @@ def visualize(dictionaryList):
 	plt.axvline(upperLimit,color='k', linestyle='dashed', linewidth=1)
 	plt.show()
 
-'''
 
 
 
