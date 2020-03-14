@@ -41,7 +41,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Invariants / Global variables
 
-IBM_host = "stream.watsonplatform.net"				# Name of the IBM host / service. us-south by default
+IBM_HOST = "stream.watsonplatform.net"				# Name of the IBM host / service. us-south by default
 STT_service = "speech-to-text"						# Speech to Text service name.
 IDModels = ["en-US_BroadbandModel",  				# Base models that return speaker ID's
 			"en-US_ShortForm_NarrowbandModel",
@@ -398,12 +398,13 @@ def run(username,password,out_dir,base_model,acoustic_id,language_id,
 	headers = {opt_out_key : '1'} if opt_out else {}
 
 	# Setting the IBM_HOST based on the Region
+	global IBM_HOST
 	IBM_HOST = REGION_MAP[region]
 
 	# Authenticating using Watson tokens.
 	if watson_token == 1:
 		headers[Watson_token_key] = (Utilities.getAuthenticationToken(
-			'https://'+IBM_host,STT_service,username,password))
+			'https://'+IBM_HOST,STT_service,username,password))
 	else:
 	# Authenticating using Access tokens tokens.
 		auth = username + ":" + password
@@ -411,7 +412,7 @@ def run(username,password,out_dir,base_model,acoustic_id,language_id,
 
 	# Creating and adding additional parameters to request url.
 	fmt = "wss://{0}/{1}/api/v1/recognize?model={2}"
-	url = fmt.format(IBM_host,STT_service,base_model)
+	url = fmt.format(IBM_HOST,STT_service,base_model)
 	if language_id != None: url += '&language_customization_id={}'.format(language_id)		# Adding custom language model id.																		# Set if a custom language model for customization weight.
 	if acoustic_id != None: url += '&acoustic_customization_id={}'.format(acoustic_id)		# Adding custom acoustic model id.
 	if language_id != None: custom = True 													# Indicating if custom weight used.
