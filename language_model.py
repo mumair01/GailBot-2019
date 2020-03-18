@@ -269,7 +269,7 @@ def add_corpus(username, password, filename,customID):
 	corpus_name = filename[:filename.rfind(".")]
 
 	print("\nAdding corpus file...")
-	uri = "https://{}/speech-to-text/api/v1/customizations/"+customID+"/corpora/".format(IBM_host) +corpus_name
+	uri = "https://{0}/speech-to-text/api/v1/customizations/{1}/corpora/{2}".format(IBM_host,customID,corpus_name)
 	with open(corpus_file, 'rb') as f:
 	   r = requests.post(uri, auth=(username,password), verify=False, headers=headers, data=f)
 
@@ -300,7 +300,6 @@ def train_model(username,password,customID):
 	status = respJson['status']
 
 
-
 	time_to_run = 10
 	while (status != 'available'):
 	    time.sleep(10)
@@ -310,24 +309,26 @@ def train_model(username,password,customID):
 	    # Suspend training if failed
 	    if status == 'failed':
 	    	error = json.loads(respJson['error'])
-	    	print(colored("\n"+error['warnings'][0]['message'],'red'))
-	    	delete_model(username,password,respJson['customization_id']) ; return
+	    	print(colored("\n"+error['error'],'red'))
+	    	delete_model(username,password,respJson['customization_id'])
+	    	return
+
 	    print("status: ", status, "(", time_to_run, ")")
 	    time_to_run += 10
 	print(colored("\nTraining complete!",'green'))
 
-# Function that adds a single word to the model
-def add_word(username,password,word,sounds_like,display_as,customID):
-	print("\nAdding single word...")
-	data = {"sounds_like" : [sounds_like], "display_as" : display_as}
-	wordToAdd = word
-	u = wordToAdd
-	uri = "https://{}/speech-to-text/api/v1/customizations/".format(IBM_host) +customID+"/words/"+u
-	jsonObject = json.dumps(data).encode('utf-8')
-	r = requests.put(uri, auth=(username,password), verify=False, headers=headers, data=jsonObject)
+# # Function that adds a single word to the model
+# def add_word(username,password,word,sounds_like,display_as,customID):
+# 	print("\nAdding single word...")
+# 	data = {"sounds_like" : [sounds_like], "display_as" : display_as}
+# 	wordToAdd = word
+# 	u = wordToAdd
+# 	uri = "https://{}/speech-to-text/api/v1/customizations/".format(IBM_host) +customID+"/words/"+u
+# 	jsonObject = json.dumps(data).encode('utf-8')
+# 	r = requests.put(uri, auth=(username,password), verify=False, headers=headers, data=jsonObject)
 
-	print("Adding single word returns: ", r.status_code)
-	print("Single word added!")
+# 	print("Adding single word returns: ", r.status_code)
+# 	print("Single word added!")
 
 # Function that adds multiple words to a model to be analyzed
 def add_multiple_words(username,password,interim_data,customID):
@@ -416,7 +417,11 @@ def words(username,password,closure):
 			print("Enter word, the" 
 				" sound of the word, and word spellings\nPress 0 to stop adding words\n")
 			word,sound,display = input().split()
-		except ValueError: break
+		except ValueError: 
+			if len(final) < 3:
+				print(colored("Array must have at least 3 words",'red'))
+				continue
+			else: break
 		data.update({"word":word,"sound":sound,"display":display}) 
 		final.append(data)
 	add_multiple_words(username,password,final,customID)

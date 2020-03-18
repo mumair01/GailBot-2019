@@ -172,14 +172,10 @@ def lastVowelPos(string):
 # Input: Median absolute deviation for the syllable rate, Syllable rate of turn.
 # Output: The number of colons to be added.
 def numColons(syllRateMAD, syllRateTurn,median):
-	print("IN NUM COLONS")
-	print(syllRateMAD,syllRateTurn)
 	syllRateDiff = abs(syllRateTurn - median)
 	# Handling case where difference is 0 i.e. denominator cannot be 0.
 	if syllRateDiff == 0: syllRateDiff = 0.1
 	colons = int(round(syllRateDiff/ syllRateMAD))
-	print("syllRateDiff/ syllRateMAD", syllRateDiff/ syllRateMAD)
-	print(colons)
 	return colons
 
 
@@ -194,13 +190,6 @@ def visualize(dictionaryList):
 	median_absolute_deviation = round(robust.mad(allRates),2)
 	lowerLimit = (median-(LimitDeviations*median_absolute_deviation))
 	upperLimit = (median+(LimitDeviations*median_absolute_deviation))
-	print("Syllable rate per turn\n")
-	for turnRate in allRates:
-		print(turnRate)
-	print("Median syllable rate {}".format(median))
-	print("Median absolute deviation {}".format(median_absolute_deviation))
-	print("Lower threshold {}".format(lowerLimit))
-	print("Upper threshold {}".format(upperLimit))
 	plt.figure(figsize=(10, 4))
 	plt.hist(allRates,bins=14,color='c', edgecolor='k')
 	plt.axvline(median,color='k', linestyle='dashed', linewidth=1)

@@ -277,8 +277,9 @@ def exec_menu(choice,function_list):
 	choice = choice.lower()
 	if choice == '': return
 	else:
-		try: function_list[choice]()
-		except KeyError: print("Invalid selection, please try again.\n")
+		function_list[choice]()
+		# try: function_list[choice]()
+		# except KeyError: print("Invalid selection, please try again.\n")
 	return
 
 # Function that runs the entire post-processing module as a separate entity.

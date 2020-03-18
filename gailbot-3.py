@@ -169,11 +169,12 @@ def exec_menu(choice,function_list,username,password,closure):
 	choice = choice.lower()
 	if choice == '': return
 	else:
-		try: function_list[choice](username,password,closure)
-		except KeyError: print("Invalid selection, please try again.\n")
-		except KeyboardInterrupt:
-			print(colored("\n\nKeyboard cancellation caught\n",'red'))
-			input(colored("Press any key to return to the main menu...",'red'))
+		function_list[choice](username,password,closure)
+		# try: function_list[choice](username,password,closure)
+		# except KeyError: print("Invalid selection, please try again.\n")
+		# except KeyboardInterrupt:
+		# 	print(colored("\n\nKeyboard cancellation caught\n",'red'))
+		# 	input(colored("Press any key to return to the main menu...",'red'))
 	return
 
 # Main menu function
