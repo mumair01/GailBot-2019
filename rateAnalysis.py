@@ -38,6 +38,7 @@ from termcolor import colored
 
 
 import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
+from matplotlib.font_manager import FontProperties
 #import seaborn as sns
 plt.style.use('seaborn') # pretty matplotlib plots
 
@@ -79,7 +80,7 @@ def analyzeSyllableRate(infoList):
 		# Adds delims to individual word jsonList.
 		dic['jsonList'] = addDelims(dictionaryList,statsDic,dic['jsonList'])
 		# Visuzlizing the data.
-		# ** visualize(dictionaryList)
+		visualize(dictionaryList)
 	for dicCopy,dic in zip(infoListCopy,infoList):
 		# Adding Hesitation markers back.
 		dic['jsonList'] = addHesitation(dicCopy,dic)
@@ -195,20 +196,23 @@ def visualize(dictionaryList):
 
 
 	fig,ax = plt.subplots()
-	ax.set_xlabel("Syllable rate per turn")
+	ax.set_xlabel("Syllable rate per turn (syllables / second)")
 	ax.set_ylabel("Number of turns")
-	ax.hist(allRates,bins=14,color='c', edgecolor='k')
-	ax.axvline(median,color='k', linestyle='dashed', linewidth=1)
-	ax.axvline(lowerLimit,color='k', linestyle='dashed', linewidth=1)
-	ax.axvline(upperLimit,color='k', linestyle='dashed', linewidth=1)
+	ax.hist(allRates,bins=20,color='c', edgecolor='k')
+	ax.axvline(median,color='k', linestyle='dashed', linewidth=1, label = "Median")
+	ax.axvline(lowerLimit,color='r', linestyle='dashed', linewidth=1, label = "Median + 2 * MAD")
+	ax.axvline(upperLimit,color='r', linestyle='dashed', linewidth=1, label = "Median - 2 * MAD")
 	ax.set_xlim((0,10))
 
-	ax.spines["top"].set_visible(False)  
-	ax.spines["right"].set_visible(False)
-	ax.get_xaxis().tick_bottom()  
-	ax.get_yaxis().tick_left()  
+
+	font = FontProperties()
+	font.set_family('serif')
+	font.set_name('Times New Roman')
 	
 	fig.figsize = (10,4)
+	fig.legend(fancybox=True, framealpha=0.5,frameon=True,loc = 'upper right')
+	leg = fig.legend()
+	leg.get_frame().set_edgecolor('b')
 	fig.show()
 
 	# plt.figure(figsize=(10, 4))
