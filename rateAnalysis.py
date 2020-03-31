@@ -25,9 +25,7 @@
 
 '''
 
-
 import os, sys
-import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
 import librosa.display 						# Library to display signal.
 import numpy 									# Library to have multi-dimensional homogenous arrays.
 from big_phoney import BigPhoney				# Finds the syllables per word.
@@ -38,6 +36,10 @@ import copy 									# Copying module.
 import logging
 from termcolor import colored
 
+
+import matplotlib.pyplot as plt 				# Library to visualize mfcc features.
+#import seaborn as sns
+plt.style.use('seaborn') # pretty matplotlib plots
 
 
 tf.get_logger().setLevel(logging.ERROR) 		# Turning off tensorflow debugging messages.
@@ -190,12 +192,31 @@ def visualize(dictionaryList):
 	median_absolute_deviation = round(robust.mad(allRates),2)
 	lowerLimit = (median-(LimitDeviations*median_absolute_deviation))
 	upperLimit = (median+(LimitDeviations*median_absolute_deviation))
-	plt.figure(figsize=(10, 4))
-	plt.hist(allRates,bins=14,color='c', edgecolor='k')
-	plt.axvline(median,color='k', linestyle='dashed', linewidth=1)
-	plt.axvline(lowerLimit,color='k', linestyle='dashed', linewidth=1)
-	plt.axvline(upperLimit,color='k', linestyle='dashed', linewidth=1)
-	plt.show()
+
+
+	fig,ax = plt.subplots()
+	ax.set_xlabel("Syllable rate per turn")
+	ax.set_ylabel("Number of turns")
+	ax.hist(allRates,bins=14,color='c', edgecolor='k')
+	ax.axvline(median,color='k', linestyle='dashed', linewidth=1)
+	ax.axvline(lowerLimit,color='k', linestyle='dashed', linewidth=1)
+	ax.axvline(upperLimit,color='k', linestyle='dashed', linewidth=1)
+	ax.set_xlim((0,10))
+
+	ax.spines["top"].set_visible(False)  
+	ax.spines["right"].set_visible(False)
+	ax.get_xaxis().tick_bottom()  
+	ax.get_yaxis().tick_left()  
+	
+	fig.figsize = (10,4)
+	fig.show()
+
+	# plt.figure(figsize=(10, 4))
+	# plt.hist(allRates,bins=14,color='c', edgecolor='k')
+	# plt.axvline(median,color='k', linestyle='dashed', linewidth=1)
+	# plt.axvline(lowerLimit,color='k', linestyle='dashed', linewidth=1)
+	# plt.axvline(upperLimit,color='k', linestyle='dashed', linewidth=1)
+	# plt.show()
 
 
 
