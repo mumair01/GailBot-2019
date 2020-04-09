@@ -80,7 +80,7 @@ def analyzeSyllableRate(infoList):
 		# Adds delims to individual word jsonList.
 		dic['jsonList'] = addDelims(dictionaryList,statsDic,dic['jsonList'])
 		# Visuzlizing the data.
-		visualize(dictionaryList)
+		# ** visualize(dictionaryList)
 	for dicCopy,dic in zip(infoListCopy,infoList):
 		# Adding Hesitation markers back.
 		dic['jsonList'] = addHesitation(dicCopy,dic)
