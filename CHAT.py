@@ -71,7 +71,8 @@ shellCommands = {
 
 # Dictionary of unicode symbols used in CHAT transcripts
 CHATsymbols = {
-	"latch" : u'\u2248'
+	"latch" : u'\u2248',
+	"bullet" : u'\u0015'
 }
 
 # Name for the final CHAT file.
@@ -485,7 +486,8 @@ def CHATList(infoList):
 			elem[3]="\n\t".join([elem[3][i:i+80] for i in range(0,len(elem[3]),80)])
 		# Adding bullets with timing details.
 		for elem in jsonListCombined:
-			turn = '{0}\t{1} \u0015{2}_{3}\u0015\n'.format(elem[0],elem[3].lstrip(),elem[1],elem[2])
+			turn = '{0}\t{1} {4}{2}_{3}{4}\n'.format(elem[0],elem[3].lstrip(),elem[1],elem[2],
+						CHATsymbols["bullet"])
 			CHATList.append(turn)
 		CHATList.append("@End\r")
 		for dic in item:dic['CHATList'] = CHATList
